@@ -135,6 +135,7 @@ export default function EvenementsScreen() {
         </View>
       </Modal>
 
+
       {/* Modal de succès */}
       <Modal visible={successVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>

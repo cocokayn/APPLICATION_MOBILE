@@ -79,20 +79,32 @@ export default function EtudesScreen() {
           </TouchableOpacity>
 
           {!deleteMode ? (
-            <TouchableOpacity
-              style={[styles.adminButton, { backgroundColor: '#d9534f' }]}
-              onPress={() => setDeleteMode(true)}
-            >
-              <Text style={styles.adminButtonText}>Supprimer une étude</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
-              onPress={handleDeleteSelected}
-            >
-              <Text style={styles.adminButtonText}>Confirmer suppression</Text>
-            </TouchableOpacity>
-          )}
+  <TouchableOpacity
+    style={[styles.adminButton, { backgroundColor: '#d9534f' }]}
+    onPress={() => setDeleteMode(true)}
+  >
+    <Text style={styles.adminButtonText}>Supprimer une étude</Text>
+  </TouchableOpacity>
+) : (
+  <>
+    <TouchableOpacity
+      style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
+      onPress={handleDeleteSelected}
+    >
+      <Text style={styles.adminButtonText}>Confirmer suppression</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={[styles.adminButton, { backgroundColor: '#aaa' }]}
+      onPress={() => {
+        setDeleteMode(false);
+        setSelectedStudies([]);
+      }}
+    >
+      <Text style={styles.adminButtonText}>Annuler</Text>
+    </TouchableOpacity>
+  </>
+)}
         </View>
 
         {studies.map((item) => (
