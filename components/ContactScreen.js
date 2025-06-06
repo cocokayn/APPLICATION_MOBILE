@@ -1,4 +1,5 @@
 // components/ContactScreen.js
+//jksdbflzih flse
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
