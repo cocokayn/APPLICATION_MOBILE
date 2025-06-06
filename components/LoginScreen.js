@@ -6,27 +6,24 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  Alert
+  Alert,
 } from 'react-native';
-import auth from '@react-native-firebase/auth'; // Firebase Auth
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
-    try {
-      // Connexion à Firebase Authentication
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
-      const user = userCredential.user;
+  // Exemple d'utilisateur simulé
+  const fakeUser = {
+    email: 'etudiant@epf.fr',
+    password: 'epf1234',
+  };
 
-      // Si tout va bien, redirige vers la page principale
-      navigation.replace('Main');
-    } catch (error) {
-      let message = 'Une erreur est survenue.';
-      if (error.code === 'auth/user-not-found') message = 'Utilisateur introuvable.';
-      if (error.code === 'auth/wrong-password') message = 'Mot de passe incorrect.';
-      Alert.alert('Erreur', message);
+  const handleLogin = () => {
+    if (email === fakeUser.email && password === fakeUser.password) {
+      navigation.replace('Main'); // Redirection si OK
+    } else {
+      Alert.alert('Erreur', 'Email ou mot de passe incorrect');
     }
   };
 
