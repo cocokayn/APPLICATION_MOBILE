@@ -1,4 +1,5 @@
 // components/ContactScreen.js
+//jksdbflzih flse
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -17,7 +18,7 @@ export default function ContactScreen() {
         <Text style={styles.backButtonText}>← Retour</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Contact</Text>
+      <Text style={styles.title}>Contact a enlever</Text>
 
       <View style={styles.contactItem}>
         <Text style={styles.label}>Email :</Text>
