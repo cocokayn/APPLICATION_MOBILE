@@ -61,10 +61,7 @@ export default function EtudesScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>EPF Projets</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-          <Image source={require('../assets/para2.png')} style={styles.settingsIcon} />
-        </TouchableOpacity>
-      </View>
+              </View>
 
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>Études disponibles</Text>

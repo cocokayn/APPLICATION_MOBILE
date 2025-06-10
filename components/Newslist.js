@@ -100,7 +100,7 @@ export default function NewsList() {
             placeholder="Rechercher articles"
             style={styles.searchInput}
           />
-          <Image source={require('../assets/para2.png')} style={styles.searchIcon} />
+          <Image source={require('../assets/search.png')} style={styles.searchIcon} />
         </View>
 
         {/* Filtres */}
