@@ -1,40 +1,47 @@
-// components/PreferenceScreen.js
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
+const { width, height } = Dimensions.get('window');
 
 export default function PreferenceScreen() {
   const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
-      {/* Bouton Retour */}
+      {/* Bouton Retour en haut à gauche (position absolue) */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Text style={styles.backButtonText}>← Retour</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Préférences</Text>
+      {/* Titre bien espacé sous le bouton */}
+      <View style={styles.titleWrapper}>
+        <Text style={styles.title}>Préférences</Text>
+      </View>
 
       <TouchableOpacity
-  style={styles.button}
-  onPress={() => navigation.navigate('QuiSommesNous')}>
-  <Text style={styles.buttonText}>Qui sommes nous?</Text>
-</TouchableOpacity>
-<TouchableOpacity
-  style={styles.button}
-  onPress={() => navigation.navigate('ConditionsUtil')}>
-  <Text style={styles.buttonText}>Conditions générales d'utilisation</Text>
-</TouchableOpacity>
-      <TouchableOpacity 
-      style={styles.button} onPress={() => navigation.navigate('Contact')}>
-  <Text style={styles.buttonText}>Contact</Text>
-</TouchableOpacity>
+        style={styles.button}
+        onPress={() => navigation.navigate('QuiSommesNous')}>
+        <Text style={styles.buttonText}>Qui sommes nous ?</Text>
+      </TouchableOpacity>
 
-<TouchableOpacity 
-style={styles.button} onPress={() => navigation.navigate('MentionsLegales')}>
-  <Text style={styles.buttonText}>Mentions légales</Text>
-</TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('ConditionsUtil')}>
+        <Text style={styles.buttonText}>Conditions générales d'utilisation</Text>
+      </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Contact')}>
+        <Text style={styles.buttonText}>Contact</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('MentionsLegales')}>
+        <Text style={styles.buttonText}>Mentions légales</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -42,27 +49,38 @@ style={styles.button} onPress={() => navigation.navigate('MentionsLegales')}>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
     backgroundColor: '#fff',
   },
   backButton: {
-    marginBottom: 10,
+    position: 'absolute',
+    top: height * 0.06,
+    left: '5%',
+    padding: 8,
+    zIndex: 10,
   },
   backButtonText: {
-    color: '#007bff',
-    fontSize: 16,
+    fontSize: width * 0.045,
+    color: '#376787',
+    fontWeight: 'bold',
+  },
+  titleWrapper: {
+    paddingTop: height * 0.12, // espacement sous le bouton
+    paddingBottom: height * 0.015,
+    paddingHorizontal: '5%',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: width * 0.06,
     fontWeight: 'bold',
-    marginBottom: 30,
+    textAlign: 'center',
+    marginBottom: height * 0.03,
   },
   button: {
-    backgroundColor: '#ADD8E6',
+    backgroundColor: '#376787',
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
+    marginHorizontal: 20,
     alignItems: 'center',
   },
   buttonText: {
