@@ -15,8 +15,8 @@ export default function LoginScreen({ navigation }) {
 
   // Exemple d'utilisateur simulé
   const fakeUser = {
-    email: 'etudiant@epf.fr',
-    password: 'epf1234',
+    email: 'e@epf.fr',
+    password: 'epf',
   };
 
   const handleLogin = () => {

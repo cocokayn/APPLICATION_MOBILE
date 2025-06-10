@@ -5,13 +5,11 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  Dimensions,
   Alert,
+  TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-const { width, height } = Dimensions.get('window');
 
 export default function AjouterEtudeScreen() {
   const navigation = useNavigation();
@@ -36,10 +34,9 @@ export default function AjouterEtudeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Bouton retour */}
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Retour</Text>
-        </Pressable>
+        </TouchableOpacity>
 
         <Text style={styles.title}>Création d'une étude</Text>
 
@@ -64,50 +61,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   container: {
-    paddingHorizontal: '5%',
-    paddingTop: height * 0.03,
-    paddingBottom: height * 0.02,
+    paddingTop: 60,
+    paddingHorizontal: 20,
   },
   backButton: {
-    position: 'absolute',
-    top: height * 0.015,
-    left: '5%',
-    zIndex: 10,
-    padding: 8,
+    marginBottom: 10,
   },
   backButtonText: {
-    fontSize: width * 0.045,
     color: '#376787',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   title: {
-    fontSize: width * 0.055,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: height * 0.025,
+    marginBottom: 20,
     textAlign: 'center',
-    marginTop: height * 0.05, // pour ne pas être caché derrière le bouton
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    paddingVertical: height * 0.015,
-    paddingHorizontal: '4%',
-    marginBottom: height * 0.015,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 15,
+    borderRadius: 10,
     width: '100%',
   },
   button: {
     backgroundColor: '#376787',
-    paddingVertical: height * 0.02,
+    paddingVertical: 14,
     paddingHorizontal: '5%',
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: height * 0.02,
+    marginTop: 10,
     width: '100%',
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: width * 0.045,
+    fontSize: 16,
   },
 });
