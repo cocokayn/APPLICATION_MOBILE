@@ -35,7 +35,7 @@ const Tab = createBottomTabNavigator();
 function HomeScreen() {
   return (
     <>
-      <Pagegarde />
+     <Pagegarde/>
       <NewsList />
     </>
   );

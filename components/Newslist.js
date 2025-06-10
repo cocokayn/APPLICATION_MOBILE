@@ -8,7 +8,6 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
-  TextInput,
   ScrollView,
   Modal
 } from 'react-native';
@@ -24,6 +23,22 @@ const categories = [
   { label: 'Sciences', value: 'science' },
   { label: 'Sport', value: 'sport' },
   { label: 'Agriculture', value: 'general' },
+  { label: 'JE', value: 'je' },
+];
+
+const jeArticles = [
+  {
+    title: 'Projet IA au sein de la Junior Entreprise',
+    description: 'Nous développons une solution d’intelligence artificielle pour automatiser la rédaction de rapports techniques.',
+    url: 'https://exemple-je1.com',
+    urlToImage: 'https://picsum.photos/seed/je1/800/400',
+  },
+  {
+    title: 'Collaboration réussie avec une startup locale',
+    description: 'Notre équipe a accompagné une jeune entreprise dans le prototypage de son application mobile.',
+    url: 'https://exemple-je2.com',
+    urlToImage: 'https://picsum.photos/seed/je2/800/400',
+  },
 ];
 
 export default function NewsList() {
@@ -33,7 +48,7 @@ export default function NewsList() {
 
   useEffect(() => {
     categories.forEach(async (cat) => {
-      if (cat.value !== 'all') {
+      if (cat.value !== 'all' && cat.value !== 'je') {
         try {
           const response = await fetch(
             `https://newsapi.org/v2/top-headlines?country=us&category=${cat.value}&apiKey=c9c1ec38c3304a588537249cdcd797ce`
@@ -45,6 +60,12 @@ export default function NewsList() {
         }
       }
     });
+
+    // Ajouter les articles de "JE"
+    setArticlesByCategory(prev => ({
+      ...prev,
+      JE: jeArticles,
+    }));
   }, []);
 
   const truncateText = (text, maxLength = 100) => {
@@ -103,6 +124,8 @@ export default function NewsList() {
           <Image source={require('../assets/search.png')} style={styles.searchIcon} />
         </View>
 
+
+
         {/* Filtres */}
         <ScrollView horizontal contentContainerStyle={styles.filterContainer} showsHorizontalScrollIndicator={false}>
           {categories.map((cat) => (
@@ -130,9 +153,11 @@ export default function NewsList() {
         {selectedCategory === 'all'
           ? categories
               .filter(cat => cat.value !== 'all')
-              .map(cat => renderArticlesForCategory(cat.label))
+              .map(cat => renderArticlesForCategory(cat.label === 'JE' ? 'JE' : cat.label))
           : renderArticlesForCategory(
-              categories.find(cat => cat.value === selectedCategory)?.label
+              selectedCategory === 'je'
+                ? 'JE'
+                : categories.find(cat => cat.value === selectedCategory)?.label
             )}
 
         {/* Modal WebView */}
@@ -161,7 +186,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   verticalListContainer: {
-    paddingHorizontal: 0, // tu peux ajuster si besoin
+    paddingHorizontal: 0,
   },
   articleBubble: {
     width: width * 0.8,
@@ -177,30 +202,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   articleBubbleVertical: {
-    width: '95%',       // pleine largeur en vertical avec un peu de marge
-    marginHorizontal: 'auto',  // centré horizontalement
+    width: '95%',
+    marginHorizontal: 'auto',
   },
   titre: { fontWeight: 'bold', fontSize: 16, marginBottom: 8 },
   image: { width: '100%', height: 200, borderRadius: 10, marginBottom: 8 },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 30,
-    paddingHorizontal: 20,
-    margin: 16,
-    height: 70,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  searchIcon: {
-    width: 28,
-    height: 28,
-    marginLeft: 10,
-  },
   sectionTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',

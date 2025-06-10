@@ -68,41 +68,44 @@ export default function EtudesScreen() {
 
         {/* Boutons globaux */}
         <View style={styles.adminButtons}>
-          <TouchableOpacity
-            style={[styles.adminButton, { backgroundColor: '#28a745' }]}
-            onPress={() => navigation.navigate('AjouterEtude')}
-          >
-            <Text style={styles.adminButtonText}>Ajouter une étude</Text>
-          </TouchableOpacity>
-
-          {!deleteMode ? (
-  <TouchableOpacity
-    style={[styles.adminButton, { backgroundColor: '#d9534f' }]}
-    onPress={() => setDeleteMode(true)}
-  >
-    <Text style={styles.adminButtonText}>Supprimer une étude</Text>
-  </TouchableOpacity>
-) : (
-  <>
+  {!deleteMode && (
     <TouchableOpacity
-      style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
-      onPress={handleDeleteSelected}
+      style={[styles.adminButton, { backgroundColor: '#28a745' }]}
+      onPress={() => navigation.navigate('AjouterEtude')}
     >
-      <Text style={styles.adminButtonText}>Confirmer suppression</Text>
+      <Text style={styles.adminButtonText}>Ajouter une étude</Text>
     </TouchableOpacity>
+  )}
 
+  {!deleteMode ? (
     <TouchableOpacity
-      style={[styles.adminButton, { backgroundColor: '#aaa' }]}
-      onPress={() => {
-        setDeleteMode(false);
-        setSelectedStudies([]);
-      }}
+      style={[styles.adminButton, { backgroundColor: '#d9534f' }]}
+      onPress={() => setDeleteMode(true)}
     >
-      <Text style={styles.adminButtonText}>Annuler</Text>
+      <Text style={styles.adminButtonText}>Supprimer une étude</Text>
     </TouchableOpacity>
-  </>
-)}
-        </View>
+  ) : (
+    <>
+      <TouchableOpacity
+        style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
+        onPress={handleDeleteSelected}
+      >
+        <Text style={styles.adminButtonText}>Confirmer suppression</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.adminButton, { backgroundColor: '#aaa' }]}
+        onPress={() => {
+          setDeleteMode(false);
+          setSelectedStudies([]);
+        }}
+      >
+        <Text style={styles.adminButtonText}>Annuler</Text>
+      </TouchableOpacity>
+    </>
+  )}
+</View>
+
 
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
