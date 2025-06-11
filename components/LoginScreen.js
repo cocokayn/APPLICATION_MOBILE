@@ -9,22 +9,34 @@ import {
   Alert,
 } from 'react-native';
 
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Exemple d'utilisateur simulé
-  const fakeUser = {
-    email: 'e@epf.fr',
-    password: 'epf',
-  };
-
   const handleLogin = () => {
-    if (email === fakeUser.email && password === fakeUser.password) {
-      navigation.replace('Main'); // Redirection si OK
-    } else {
-      Alert.alert('Erreur', 'Email ou mot de passe incorrect');
+    if (!email || !password) {
+      Alert.alert('Erreur', 'Veuillez remplir email et mot de passe');
+      return;
     }
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(() => {
+        navigation.replace('Main');
+      })
+      .catch(error => {
+        let message = 'Erreur lors de la connexion.';
+        if (error.code === 'auth/user-not-found') {
+          message = "Utilisateur non trouvé.";
+        } else if (error.code === 'auth/wrong-password') {
+          message = "Mot de passe incorrect.";
+        } else if (error.code === 'auth/invalid-email') {
+          message = "Email invalide.";
+        }
+        Alert.alert('Erreur', message);
+      });
   };
 
   return (
@@ -65,6 +77,9 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
+
+// StyleSheet reste identique
+
 
 const styles = StyleSheet.create({
   container: {

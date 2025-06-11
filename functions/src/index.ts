@@ -36,7 +36,7 @@ export const getUtilisateurs = functions.https.onRequest(async (req, res) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
 
-    const [rows] = await connection.execute("SELECT * FROM Utilisateur");
+    const [rows] = await connection.execute("SELECT * FROM utilisateur");
 
     res.status(200).json(rows);
     await connection.end();
