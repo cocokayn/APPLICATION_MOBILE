@@ -311,6 +311,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  selectedFilter: { backgroundColor: '#493d8a' },
+  filterText: { fontSize: 14, color: '#333' },
+  selectedFilterText: { color: 'white', fontWeight: 'bold' },
+  closeButtonBottom: {
+    position: 'absolute', bottom: 30, alignSelf: 'center', backgroundColor: '#493d8a', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 30,
+  },
+  modalClose: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  addButton: {
+    backgroundColor: '#493d8a',
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   addButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   input: {
     backgroundColor: '#f8f8f8',
@@ -320,6 +335,7 @@ const styles = StyleSheet.create({
   },
   imagePicker: {
     backgroundColor: '#376787',
+    backgroundColor: '#493d8a',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -332,4 +348,5 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   deleteText: { color: 'white', fontWeight: 'bold' },
+});
 });
