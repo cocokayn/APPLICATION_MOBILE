@@ -83,7 +83,6 @@ export default function App() {
         <Stack.Screen
           name="EtudesDetail"
           component={EtudesDetailScreen}
-          options={{ headerShown: true, title: 'Détail de l’étude' }}
         />
         <Stack.Screen name="InfosPerso" component={InfosPersoScreen} options={{ title: 'Infos personnelles' }} />
         <Stack.Screen name="Historique" component={HistoriqueScreen} options={{ title: 'Historique' }} />
