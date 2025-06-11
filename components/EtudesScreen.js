@@ -64,6 +64,8 @@ export default function EtudesScreen() {
 
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>Études disponibles</Text>
+    
+      
 
         {/* Boutons globaux */}
         <View style={styles.adminButtons}>
@@ -140,7 +142,9 @@ export default function EtudesScreen() {
           </View>
         ))}
       </ScrollView>
+        </View>
     </SafeAreaView>
+    
   );
 }
 
