@@ -58,52 +58,13 @@ export default function EtudesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>EPF Projets</Text>
-      </View>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.sectionTitle}>Études disponibles</Text>
-
-        {/* Boutons globaux */}
-        <View style={styles.adminButtons}>
-          {!deleteMode && (
-            <TouchableOpacity
-              style={[styles.adminButton, { backgroundColor: '#28a745' }]}
-              onPress={() => navigation.navigate('AjouterEtude')}
-            >
-              <Text style={styles.adminButtonText}>Ajouter une étude</Text>
-            </TouchableOpacity>
-          )}
-
-          {!deleteMode ? (
-            <TouchableOpacity
-              style={[styles.adminButton, { backgroundColor: '#d9534f' }]}
-              onPress={() => setDeleteMode(true)}
-            >
-              <Text style={styles.adminButtonText}>Supprimer une étude</Text>
-            </TouchableOpacity>
-          ) : (
-            <>
+        <Text style={styles.sectionTitle}>Études disponibles - EPF Projets</Text>
               <TouchableOpacity
                 style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
-                onPress={handleDeleteSelected}
-              >
-                <Text style={styles.adminButtonText}>Confirmer suppression</Text>
+                onPress={handleDeleteSelected} >
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.adminButton, { backgroundColor: '#aaa' }]}
-                onPress={() => {
-                  setDeleteMode(false);
-                  setSelectedStudies([]);
-                }}
-              >
-                <Text style={styles.adminButtonText}>Annuler</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
 
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
@@ -168,7 +129,7 @@ export default function EtudesScreen() {
             style={styles.greenButton}
             onPress={() => navigation.navigate('AjouterEtude')}
           >
-            <Text style={styles.redButtonText}>Ajouter une étude</Text>
+            <Text style={styles.greenButtonText}>Ajouter une étude</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.redButton} onPress={() => setDeleteMode(true)}>
@@ -273,6 +234,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   redButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  greenButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 15,

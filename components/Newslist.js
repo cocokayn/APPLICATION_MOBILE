@@ -311,15 +311,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  selectedFilter: { backgroundColor: '#493d8a' },
+  selectedFilter: { backgroundColor: '#376787' },
   filterText: { fontSize: 14, color: '#333' },
   selectedFilterText: { color: 'white', fontWeight: 'bold' },
   closeButtonBottom: {
-    position: 'absolute', bottom: 30, alignSelf: 'center', backgroundColor: '#493d8a', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 30,
+    position: 'absolute', bottom: 30, alignSelf: 'center', backgroundColor: '#376787', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 30,
   },
   modalClose: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   addButton: {
-    backgroundColor: '#493d8a',
+    backgroundColor: '#376787',
     paddingVertical: 12,
     marginHorizontal: 16,
     borderRadius: 10,
@@ -335,7 +335,6 @@ const styles = StyleSheet.create({
   },
   imagePicker: {
     backgroundColor: '#376787',
-    backgroundColor: '#493d8a',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
