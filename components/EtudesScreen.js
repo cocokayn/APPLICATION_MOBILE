@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  CheckBox,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -61,52 +60,53 @@ export default function EtudesScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>EPF Projets</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+          <Image source={require('../assets/para2.png')} style={styles.settingsIcon} />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>Études disponibles</Text>
-    
-      
 
         {/* Boutons globaux */}
         <View style={styles.adminButtons}>
-  {!deleteMode && (
-    <TouchableOpacity
-      style={[styles.adminButton, { backgroundColor: '#28a745' }]}
-      onPress={() => navigation.navigate('AjouterEtude')}
-    >
-      <Text style={styles.adminButtonText}>Ajouter une étude</Text>
-    </TouchableOpacity>
-  )}
+          {!deleteMode && (
+            <TouchableOpacity
+              style={[styles.adminButton, { backgroundColor: '#28a745' }]}
+              onPress={() => navigation.navigate('AjouterEtude')}
+            >
+              <Text style={styles.adminButtonText}>Ajouter une étude</Text>
+            </TouchableOpacity>
+          )}
 
-  {!deleteMode ? (
-    <TouchableOpacity
-      style={[styles.adminButton, { backgroundColor: '#d9534f' }]}
-      onPress={() => setDeleteMode(true)}
-    >
-      <Text style={styles.adminButtonText}>Supprimer une étude</Text>
-    </TouchableOpacity>
-  ) : (
-    <>
-      <TouchableOpacity
-        style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
-        onPress={handleDeleteSelected}
-      >
-        <Text style={styles.adminButtonText}>Confirmer suppression</Text>
-      </TouchableOpacity>
+          {!deleteMode ? (
+            <TouchableOpacity
+              style={[styles.adminButton, { backgroundColor: '#d9534f' }]}
+              onPress={() => setDeleteMode(true)}
+            >
+              <Text style={styles.adminButtonText}>Supprimer une étude</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
+                onPress={handleDeleteSelected}
+              >
+                <Text style={styles.adminButtonText}>Confirmer suppression</Text>
+              </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.adminButton, { backgroundColor: '#aaa' }]}
-        onPress={() => {
-          setDeleteMode(false);
-          setSelectedStudies([]);
-        }}
-      >
-        <Text style={styles.adminButtonText}>Annuler</Text>
-      </TouchableOpacity>
-    </>
-  )}
-</View>
-
+              <TouchableOpacity
+                style={[styles.adminButton, { backgroundColor: '#aaa' }]}
+                onPress={() => {
+                  setDeleteMode(false);
+                  setSelectedStudies([]);
+                }}
+              >
+                <Text style={styles.adminButtonText}>Annuler</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
 
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
@@ -142,9 +142,7 @@ export default function EtudesScreen() {
           </View>
         ))}
       </ScrollView>
-        </View>
     </SafeAreaView>
-    
   );
 }
 
