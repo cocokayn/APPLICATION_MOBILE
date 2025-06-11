@@ -9,9 +9,13 @@ import {
   TouchableOpacity,
   Dimensions,
   ScrollView,
-  Modal
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
@@ -26,27 +30,37 @@ const categories = [
   { label: 'JE', value: 'je' },
 ];
 
-const jeArticles = [
-  {
-    title: 'Projet IA au sein de la Junior Entreprise',
-    description: 'Nous développons une solution d’intelligence artificielle pour automatiser la rédaction de rapports techniques.',
-    url: 'https://exemple-je1.com',
-    urlToImage: 'https://picsum.photos/seed/je1/800/400',
-  },
-  {
-    title: 'Collaboration réussie avec une startup locale',
-    description: 'Notre équipe a accompagné une jeune entreprise dans le prototypage de son application mobile.',
-    url: 'https://exemple-je2.com',
-    urlToImage: 'https://picsum.photos/seed/je2/800/400',
-  },
-];
-
 export default function NewsList() {
-  const [articlesByCategory, setArticlesByCategory] = useState({});
+  const [articlesByCategory, setArticlesByCategory] = useState({
+    JE: [
+      {
+        title: 'Article exemple 1',
+        description: 'Description de l’article exemple 1.',
+        url: 'https://example.com/article1',
+        urlToImage: 'https://placehold.co/400x200',
+      },
+      {
+        title: 'Article exemple 2',
+        description: 'Description de l’article exemple 2.',
+        url: 'https://example.com/article2',
+        urlToImage: 'https://placehold.co/400x200',
+      },
+    ],
+  });
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedArticleUrl, setSelectedArticleUrl] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(true);
+
+  const [modalAjoutVisible, setModalAjoutVisible] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newUrl, setNewUrl] = useState('');
+  const [newImage, setNewImage] = useState(null);
+  const [addType, setAddType] = useState('text');
 
   useEffect(() => {
+    loadJeArticles();
+
     categories.forEach(async (cat) => {
       if (cat.value !== 'all' && cat.value !== 'je') {
         try {
@@ -60,13 +74,60 @@ export default function NewsList() {
         }
       }
     });
-
-    // Ajouter les articles de "JE"
-    setArticlesByCategory(prev => ({
-      ...prev,
-      JE: jeArticles,
-    }));
   }, []);
+
+  const loadJeArticles = async () => {
+    const saved = await AsyncStorage.getItem('jeArticles');
+    const parsed = saved ? JSON.parse(saved) : [];
+    if (parsed.length > 0) {
+      setArticlesByCategory(prev => ({ ...prev, JE: parsed }));
+    }
+  };
+
+  const saveJeArticles = async (newList) => {
+    await AsyncStorage.setItem('jeArticles', JSON.stringify(newList));
+    setArticlesByCategory(prev => ({ ...prev, JE: newList }));
+  };
+
+  const addArticle = () => {
+    const newArticle = {
+      title: newTitle,
+      description: newDescription,
+      url: newUrl || null,
+      urlToImage: newImage,
+    };
+    const updated = [...(articlesByCategory.JE || []), newArticle];
+    saveJeArticles(updated);
+    setModalAjoutVisible(false);
+    setNewTitle('');
+    setNewDescription('');
+    setNewUrl('');
+    setNewImage(null);
+  };
+
+  const deleteArticle = (index) => {
+    Alert.alert(
+      'Confirmation',
+      'Voulez-vous vraiment supprimer cet article ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            const updated = [...articlesByCategory.JE];
+            updated.splice(index, 1);
+            saveJeArticles(updated);
+          },
+        },
+      ]
+    );
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
+    if (!result.canceled) setNewImage(result.assets[0].uri);
+  };
 
   const truncateText = (text, maxLength = 100) => {
     if (!text) return '';
@@ -75,6 +136,7 @@ export default function NewsList() {
 
   const renderArticlesForCategory = (catLabel) => {
     const isAllCategory = selectedCategory === 'all';
+    const data = articlesByCategory[catLabel] || [];
 
     return (
       <View key={catLabel}>
@@ -84,29 +146,25 @@ export default function NewsList() {
         </View>
 
         <FlatList
-          data={articlesByCategory[catLabel] || []}
+          data={data}
           keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => setSelectedArticleUrl(item.url)}>
-              <View
-                style={[
-                  styles.articleBubble,
-                  !isAllCategory && styles.articleBubbleVertical,
-                ]}
-              >
-                {item.urlToImage && (
-                  <Image source={{ uri: item.urlToImage }} style={styles.image} />
-                )}
+          renderItem={({ item, index }) => (
+            <TouchableOpacity onPress={() => item.url && setSelectedArticleUrl(item.url)}>
+              <View style={[styles.articleBubble, !isAllCategory && styles.articleBubbleVertical]}>
+                {item.urlToImage && <Image source={{ uri: item.urlToImage }} style={styles.image} />}
                 <Text style={styles.titre}>{item.title}</Text>
                 <Text>{truncateText(item.description)}</Text>
+                {catLabel === 'JE' && (
+                  <TouchableOpacity onPress={() => deleteArticle(index)} style={styles.deleteButton}>
+                    <Text style={styles.deleteText}>Supprimer</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </TouchableOpacity>
           )}
           horizontal={isAllCategory}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={
-            isAllCategory ? styles.scrollContainer : styles.verticalListContainer
-          }
+          contentContainerStyle={isAllCategory ? styles.scrollContainer : styles.verticalListContainer}
         />
       </View>
     );
@@ -115,6 +173,7 @@ export default function NewsList() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+
         {/* Barre de recherche */}
         <View style={styles.searchContainer}>
           <TextInput
@@ -124,55 +183,97 @@ export default function NewsList() {
           <Image source={require('../assets/search.png')} style={styles.searchIcon} />
         </View>
 
-
-
-        {/* Filtres */}
         <ScrollView horizontal contentContainerStyle={styles.filterContainer} showsHorizontalScrollIndicator={false}>
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat.value}
-              style={[
-                styles.filterButton,
-                selectedCategory === cat.value && styles.selectedFilter
-              ]}
+              style={[styles.filterButton, selectedCategory === cat.value && styles.selectedFilter]}
               onPress={() => setSelectedCategory(cat.value)}
             >
-              <Text
-                style={[
-                  styles.filterText,
-                  selectedCategory === cat.value && styles.selectedFilterText
-                ]}
-              >
+              <Text style={[styles.filterText, selectedCategory === cat.value && styles.selectedFilterText]}>
                 {cat.label}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        {/* Articles */}
-        {selectedCategory === 'all'
-          ? categories
-              .filter(cat => cat.value !== 'all')
-              .map(cat => renderArticlesForCategory(cat.label === 'JE' ? 'JE' : cat.label))
-          : renderArticlesForCategory(
-              selectedCategory === 'je'
-                ? 'JE'
-                : categories.find(cat => cat.value === selectedCategory)?.label
-            )}
+        {isAdmin && selectedCategory === 'je' && (
+          <TouchableOpacity style={styles.addButton} onPress={() => setModalAjoutVisible(true)}>
+            <Text style={styles.addButtonText}>+ Ajouter un article</Text>
+          </TouchableOpacity>
+        )}
 
-        {/* Modal WebView */}
+        {selectedCategory === 'all'
+          ? categories.filter(cat => cat.value !== 'all').map(cat => renderArticlesForCategory(cat.label === 'JE' ? 'JE' : cat.label))
+          : renderArticlesForCategory(selectedCategory === 'je' ? 'JE' : categories.find(cat => cat.value === selectedCategory)?.label)}
+
         <Modal visible={!!selectedArticleUrl} animationType="slide">
           <View style={{ flex: 1 }}>
-            {selectedArticleUrl && (
-              <WebView source={{ uri: selectedArticleUrl }} />
-            )}
-            <TouchableOpacity
-              onPress={() => setSelectedArticleUrl(null)}
-              style={styles.closeButtonBottom}
-            >
+            {selectedArticleUrl && <WebView source={{ uri: selectedArticleUrl }} />}
+            <TouchableOpacity onPress={() => setSelectedArticleUrl(null)} style={styles.closeButtonBottom}>
               <Text style={styles.modalClose}>Fermer</Text>
             </TouchableOpacity>
           </View>
+        </Modal>
+
+        <Modal visible={modalAjoutVisible} animationType="slide">
+          <ScrollView contentContainerStyle={{ padding: 20 }}>
+            <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+              <TouchableOpacity
+                style={[styles.filterButton, addType === 'text' && styles.selectedFilter]}
+                onPress={() => setAddType('text')}
+              >
+                <Text style={[styles.filterText, addType === 'text' && styles.selectedFilterText]}>Texte</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterButton, addType === 'link' && styles.selectedFilter, { marginLeft: 10 }]}
+                onPress={() => setAddType('link')}
+              >
+                <Text style={[styles.filterText, addType === 'link' && styles.selectedFilterText]}>Lien</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              placeholder="Titre"
+              value={newTitle}
+              onChangeText={setNewTitle}
+              style={[styles.input, { marginBottom: 20 }]}
+            />
+            <TextInput
+              placeholder="Description"
+              value={newDescription}
+              onChangeText={setNewDescription}
+              style={[styles.input, { marginBottom: 20 }]}
+            />
+            {addType === 'link' && (
+              <TextInput
+                placeholder="Lien de l'article"
+                value={newUrl}
+                onChangeText={setNewUrl}
+                style={[styles.input, { marginBottom: 20 }]}
+              />
+            )}
+
+            <TouchableOpacity onPress={pickImage} style={[styles.imagePicker, { marginBottom: 20 }]}>
+              <Text style={{ color: '#fff' }}>Choisir une image</Text>
+            </TouchableOpacity>
+            {newImage && (
+              <Image
+                source={{ uri: newImage }}
+                style={{ width: '100%', height: 200, marginBottom: 20, borderRadius: 10 }}
+              />
+            )}
+
+            <TouchableOpacity style={styles.addButton} onPress={addArticle}>
+              <Text style={styles.addButtonText}>Ajouter</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setModalAjoutVisible(false)}
+              style={[styles.closeButtonBottom, { marginTop: 20, position: 'relative', bottom: 0 }]}
+            >
+              <Text style={styles.modalClose}>Annuler</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </Modal>
       </ScrollView>
     </SafeAreaView>
@@ -182,12 +283,8 @@ export default function NewsList() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { paddingBottom: 20 },
-  scrollContainer: {
-    paddingHorizontal: 16,
-  },
-  verticalListContainer: {
-    paddingHorizontal: 0,
-  },
+  scrollContainer: { paddingHorizontal: 16 },
+  verticalListContainer: { paddingHorizontal: 0 },
   articleBubble: {
     width: width * 0.8,
     backgroundColor: '#f0f0f0',
@@ -201,62 +298,48 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-  articleBubbleVertical: {
-    width: '95%',
-    marginHorizontal: 'auto',
-  },
+  articleBubbleVertical: { width: '95%', marginHorizontal: 'auto' },
   titre: { fontWeight: 'bold', fontSize: 16, marginBottom: 8 },
   image: { width: '100%', height: 200, borderRadius: 10, marginBottom: 8 },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginVertical: 10,
-  },
-  sectionTitle: {
-    fontWeight: 'bold',
-    fontSize: 20,
-    marginRight: 10,
-  },
-  titleLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: '#000',
-  },
-  filterContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 10,
-  },
-  filterButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  selectedFilter: {
-    backgroundColor: '#493d8a',
-  },
-  filterText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  selectedFilterText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
+  sectionTitleContainer: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginVertical: 10 },
+  sectionTitle: { fontWeight: 'bold', fontSize: 20, marginRight: 10 },
+  titleLine: { flex: 1, height: 2, backgroundColor: '#000' },
+  filterContainer: { paddingHorizontal: 16, marginBottom: 10 },
+  filterButton: { paddingVertical: 8, paddingHorizontal: 16, backgroundColor: '#e0e0e0', borderRadius: 20, marginRight: 10 },
+  selectedFilter: { backgroundColor: '#493d8a' },
+  filterText: { fontSize: 14, color: '#333' },
+  selectedFilterText: { color: 'white', fontWeight: 'bold' },
   closeButtonBottom: {
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-    backgroundColor: '#493d8a',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 30,
+    position: 'absolute', bottom: 30, alignSelf: 'center', backgroundColor: '#493d8a', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 30,
   },
-  modalClose: {
-    color: 'white',
-    fontWeight: 'bold',
+  modalClose: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  addButton: {
+    backgroundColor: '#493d8a',
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  addButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  input: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 10,
+    padding: 12,
     fontSize: 16,
   },
+  imagePicker: {
+    backgroundColor: '#493d8a',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  deleteButton: {
+    marginTop: 10,
+    backgroundColor: '#d9534f',
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  deleteText: { color: 'white', fontWeight: 'bold' },
 });
