@@ -173,6 +173,16 @@ export default function NewsList() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+
+        {/* Barre de recherche */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            placeholder="Rechercher articles"
+            style={styles.searchInput}
+          />
+          <Image source={require('../assets/search.png')} style={styles.searchIcon} />
+        </View>
+
         <ScrollView horizontal contentContainerStyle={styles.filterContainer} showsHorizontalScrollIndicator={false}>
           {categories.map((cat) => (
             <TouchableOpacity

@@ -1,9 +1,9 @@
-// components/QuiSommesNousScreen.js
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Image, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/FontAwesome';
+
+const { width, height } = Dimensions.get('window');
 
 export default function QuiSommesNousScreen() {
   const navigation = useNavigation();
@@ -14,26 +14,30 @@ export default function QuiSommesNousScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Retour */}
+      {/* Bouton Retour positionné comme dans CGU/Préférences */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Text style={styles.backButtonText}>← Retour</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Qui sommes nous ?</Text>
+      {/* Titre bien espacé */}
+      <View style={styles.titleWrapper}>
+        <Text style={styles.title}>Qui sommes nous ?</Text>
+      </View>
+      
       <View style={styles.separator} />
 
       {/* Site internet */}
       <Text style={styles.sectionTitle}>Notre site internet</Text>
       <TouchableOpacity onPress={() => openLink('https://www.epfprojets.com')}>
         <Image
-          source={require('../assets/LOGOPRO.png')} // Assure-toi que l'image est placée correctement dans assets
+          source={require('../assets/LOGOPRO.png')}
           style={styles.siteImage}
           resizeMode="cover"
         />
       </TouchableOpacity>
 
       {/* Réseaux sociaux */}
-      <Text style={styles.sectionTitle}>Nos réseaux sociaux:</Text>
+      <Text style={styles.sectionTitle}>Nos réseaux sociaux :</Text>
       <View style={styles.socialContainer}>
         <TouchableOpacity onPress={() => openLink('https://www.instagram.com/epf_projets/')} style={styles.iconRow}>
           <Icon name="instagram" size={30} color="#8a3ab9" />
@@ -42,7 +46,7 @@ export default function QuiSommesNousScreen() {
 
         <TouchableOpacity onPress={() => openLink('https://fr.linkedin.com/company/epf-projets')} style={styles.iconRow}>
           <Icon name="linkedin-square" size={30} color="#0e76a8" />
-          <Text style={styles.iconText}>Linkedin</Text>
+          <Text style={styles.iconText}>LinkedIn</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => openLink('https://www.facebook.com/epfprojetssceaux/?locale=fr_FR')} style={styles.iconRow}>
@@ -58,38 +62,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 60,
-    paddingHorizontal: 20,
   },
   backButton: {
-    marginBottom: 10,
+    position: 'absolute',
+    top: height * 0.06,
+    left: '5%',
+    padding: 8,
+    zIndex: 10,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#007bff',
+    fontSize: width * 0.045,
+    color: '#376787',
+    fontWeight: 'bold',
+  },
+  titleWrapper: {
+    paddingTop: height * 0.12,
+    paddingHorizontal: '5%',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 22,
+    fontSize: width * 0.06,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   separator: {
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
     marginVertical: 10,
+    marginHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginVertical: 10,
+    marginHorizontal: 20,
   },
   siteImage: {
-    width: '100%',
+    width: '90%',
     height: 180,
     borderRadius: 10,
+    alignSelf: 'center',
     marginBottom: 15,
   },
   socialContainer: {
     marginTop: 10,
+    marginHorizontal: 20,
   },
   iconRow: {
     flexDirection: 'row',

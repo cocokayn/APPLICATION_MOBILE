@@ -1,7 +1,9 @@
 // components/ConditionsUtilScreen.js
 import React from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
+const { width, height } = Dimensions.get('window');
 
 export default function ConditionsutilScreen() {
   const navigation = useNavigation();
@@ -9,11 +11,14 @@ export default function ConditionsutilScreen() {
   return (
     <View style={styles.container}>
       {/* Bouton retour */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+      <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
         <Text style={styles.backButtonText}>← Retour</Text>
-      </TouchableOpacity>
+      </Pressable>
 
-      <Text style={styles.title}>Conditions Générales d'Utilisation</Text>
+      {/* Titre (séparé du bouton) */}
+      <View style={styles.titleWrapper}>
+        <Text style={styles.title}>Conditions Générales d'Utilisation</Text>
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.sectionTitle}>1. Objet</Text>
@@ -99,38 +104,49 @@ export default function ConditionsutilScreen() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
     backgroundColor: '#fff',
   },
   backButton: {
-    marginBottom: 10,
+    position: 'absolute',
+    top: height * 0.06,
+    left: '5%',
+    padding: 8,
+    zIndex: 10,
   },
   backButtonText: {
-    color: '#007bff',
-    fontSize: 16,
+    fontSize: width * 0.045,
+    color: '#376787',
+    fontWeight: 'bold',
+  },
+  titleWrapper: {
+    paddingTop: height * 0.12, // espace en dessous du bouton
+    paddingBottom: height * 0.015,
+    paddingHorizontal: '5%',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 22,
+    fontSize: width * 0.05,
     fontWeight: 'bold',
-    marginBottom: 20,
+    textAlign: 'center',
   },
   scrollContent: {
-    paddingBottom: 30,
+    paddingHorizontal: '5%',
+    paddingBottom: height * 0.05,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 5,
+    marginTop: height * 0.02,
+    marginBottom: height * 0.01,
   },
   paragraph: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 10,
+    fontSize: width * 0.04,
+    lineHeight: height * 0.03,
+    marginBottom: height * 0.015,
   },
   bold: {
     fontWeight: 'bold',

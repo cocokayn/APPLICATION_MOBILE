@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   modalText: { fontSize: 16, marginBottom: 20, textAlign: 'center' },
   modalActions: { flexDirection: 'row', gap: 15 },
   modalButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#376787',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
