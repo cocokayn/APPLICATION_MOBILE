@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -49,12 +50,30 @@ export default function EtudesScreen() {
   };
 
   const handleDeleteSelected = () => {
-    if (selectedStudies.length === 0) return;
-    const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
-    setStudies(remaining);
-    setSelectedStudies([]);
-    setDeleteMode(false);
-  };
+  if (selectedStudies.length === 0) {
+    Alert.alert('Aucune sélection', 'Sélectionnez au moins une étude à supprimer.');
+    return;
+  }
+
+  Alert.alert(
+    'Confirmer la suppression',
+    `Supprimer ${selectedStudies.length} étude(s) ?`,
+    [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: () => {
+          const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
+          setStudies(remaining);
+          setSelectedStudies([]);
+          setDeleteMode(false);
+          Alert.alert('Succès', 'Étude(s) supprimée(s)');
+        },
+      },
+    ]
+  );
+};
 
   return (
     <SafeAreaView style={styles.safeArea}>

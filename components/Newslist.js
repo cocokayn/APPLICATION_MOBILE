@@ -150,7 +150,7 @@ export default function NewsList() {
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
             <TouchableOpacity onPress={() => item.url && setSelectedArticleUrl(item.url)}>
-              <View style={[styles.articleBubble, !isAllCategory && styles.articleBubbleVertical]}>
+             <View style={[styles.articleBubble, !isAllCategory && styles.articleBubbleVertical]}>
                 {item.urlToImage && <Image source={{ uri: item.urlToImage }} style={styles.image} />}
                 <Text style={styles.titre}>{item.title}</Text>
                 <Text>{truncateText(item.description)}</Text>
@@ -173,6 +173,9 @@ export default function NewsList() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+  <Text style={styles.headerTitle}>📰 Articles - EPF Projets</Text>
+</View>
         <ScrollView horizontal contentContainerStyle={styles.filterContainer} showsHorizontalScrollIndicator={false}>
           {categories.map((cat) => (
             <TouchableOpacity
@@ -319,7 +322,7 @@ const styles = StyleSheet.create({
   },
   modalClose: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   addButton: {
-    backgroundColor: '#376787',
+    backgroundColor: '#008000',
     paddingVertical: 12,
     marginHorizontal: 16,
     borderRadius: 10,
@@ -347,4 +350,13 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   deleteText: { color: 'white', fontWeight: 'bold' },
+  header: {
+  alignItems: 'center',
+  marginVertical: 20,
+},
+headerTitle: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#2A2A2A',
+},
 });
