@@ -15,8 +15,8 @@ export default function LoginScreen({ navigation }) {
 
   // Exemple d'utilisateur simulé
   const fakeUser = {
-    email: 'etudiant@epf.fr',
-    password: 'epf1234',
+    email: 'e@epf.fr',
+    password: 'epf',
   };
 
   const handleLogin = () => {
@@ -118,11 +118,12 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   footer: {
-    position: 'absolute',
-    bottom: 10,
-    textAlign: 'center',
-    width: '100%',
-    fontSize: 12,
-    color: '#666',
+  position: 'absolute',
+  bottom: 10,
+  textAlign: 'center',
+  alignSelf: 'center', // ✅ ajout pour centrer horizontalement
+  width: '100%',
+  fontSize: 12,
+  color: '#666',
   },
 });

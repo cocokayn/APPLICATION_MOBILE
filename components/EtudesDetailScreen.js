@@ -6,8 +6,13 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Modal,
+  FlatList,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+
+const { width, height } = Dimensions.get('window');
 
 export default function EtudesDetailScreen() {
   const navigation = useNavigation();
@@ -18,15 +23,11 @@ export default function EtudesDetailScreen() {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
 
-  if (!study) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <Text style={styles.title}>Aucune étude sélectionnée.</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const candidats = [
+    { id: '1', nom: 'Alexis Bidault' },
+    { id: '2', nom: 'Julie Martin' },
+    { id: '3', nom: 'Thomas Dupuis' },
+  ];
 
   const handlePostuler = () => {
     setConfirmModalVisible(true);
@@ -37,56 +38,81 @@ export default function EtudesDetailScreen() {
     setSuccessModalVisible(true);
   };
 
+  const handleCandidatPress = (candidat) => {
+    navigation.navigate('ConsulterCandidatScreen', { candidat });
+  };
+
+  if (!study) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.title}>Aucune étude sélectionnée.</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Text style={styles.title}>{study.titre}</Text>
-        <Text style={styles.subTitle}>{study.domaine} • {study.duree}</Text>
-        {study.deadline && (
-          <Text style={styles.deadline}>Date limite : {study.deadline}</Text>
-        )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.text}>{study.description}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Compétences requises</Text>
-          <Text style={styles.text}>{study.competences}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Nombre de JEH</Text>
-          <Text style={styles.text}>{study.jeh}</Text>
-        </View>
-
-        {userRole === 'admin' && (
-  <>
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Candidats qui ont postulé :</Text>
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#888' }]}
-        onPress={() => navigation.navigate('ConsulterCandidatScreen')}
-      >
-        <Text style={styles.buttonText}>Voir Alexis Bidault</Text>
+    <SafeAreaView style={styles.container}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Text style={styles.backText}>← Retour</Text>
       </TouchableOpacity>
-    </View>
 
-    <TouchableOpacity
-      style={[styles.button, { backgroundColor: '#e67e22' }]}
-      onPress={() => navigation.navigate('ModifierEtude', { study })}
-    >
-      <Text style={styles.buttonText}>Modifier cette étude</Text>
+      <View>
+  <View style={styles.titleWrapper}>
+    <Text style={styles.title}>Détail de l'étude</Text>
+  </View>
+
+  <View style={styles.card}>
+    <Text style={styles.studyTitle}>{study.titre}</Text>
+    <Text style={styles.subTitle}>{study.domaine} • {study.duree}</Text>
+    {study.deadline && (
+      <Text style={styles.deadline}>Date limite : {study.deadline}</Text>
+    )}
+
+    <Text style={styles.sectionTitle}>Description</Text>
+    <Text style={styles.text}>{study.description}</Text>
+
+    <Text style={styles.sectionTitle}>Compétences requises</Text>
+    <Text style={styles.text}>{study.competences}</Text>
+
+    <Text style={styles.sectionTitle}>Nombre de JEH</Text>
+    <Text style={styles.text}>{study.jeh}</Text>
+
+    {userRole === 'admin' && (
+      <>
+        <Text style={styles.sectionTitle}>Voir les candidats :</Text>
+        <View style={styles.scrollCandidates}>
+          <FlatList
+            data={candidats}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.candidatItem}
+                onPress={() => handleCandidatPress(item)}
+              >
+                <Text style={styles.candidatName}>{item.nom}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </>
+    )}
+
+    {userRole === 'admin' && (
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: '#e67e22' }]}
+        onPress={() => navigation.navigate('ModifierEtude', { study })}
+      >
+        <Text style={styles.buttonText}>Modifier cette étude</Text>
+      </TouchableOpacity>
+    )}
+
+    <TouchableOpacity style={styles.button} onPress={handlePostuler}>
+      <Text style={styles.buttonText}>Postuler à cette étude</Text>
     </TouchableOpacity>
-  </>
-)}
+  </View>
+</View>
 
-        <TouchableOpacity style={styles.button} onPress={handlePostuler}>
-          <Text style={styles.buttonText}>Postuler à cette étude</Text>
-        </TouchableOpacity>
-      </View>
-
+      {/* Modals */}
       <Modal transparent visible={confirmModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -121,22 +147,91 @@ export default function EtudesDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { padding: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 5 },
-  subTitle: { fontSize: 15, color: '#376787', marginBottom: 5 },
-  deadline: { fontSize: 14, color: '#999', marginBottom: 20 },
-  section: { marginBottom: 20 },
-  sectionTitle: { fontWeight: 'bold', marginBottom: 5 },
-  text: { fontSize: 14, color: '#333' },
+  scrollCandidates: {
+  maxHeight: 150,
+},
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  backButton: {
+    position: 'absolute',
+    top: height * 0.06,
+    left: '5%',
+    padding: 8,
+    zIndex: 10,
+  },
+  backText: {
+    fontSize: width * 0.045,
+    color: '#376787',
+    fontWeight: 'bold',
+  },
+  titleWrapper: {
+    paddingTop: height * 0.08,
+    paddingBottom: height * 0.01,
+    paddingHorizontal: '5%',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: width * 0.06,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: height * 0.03,
+  },
+  card: {
+    backgroundColor: '#f0f0f0',
+    marginHorizontal: '5%',
+    borderRadius: 12,
+    padding: 20,
+  },
+  studyTitle: {
+    fontSize: width * 0.05,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subTitle: {
+    fontSize: width * 0.04,
+    color: '#376787',
+    marginBottom: 5,
+  },
+  deadline: {
+    fontSize: width * 0.035,
+    color: '#999',
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontWeight: 'bold',
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  text: {
+    fontSize: width * 0.04,
+    color: '#333',
+  },
+  candidatItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  candidatName: {
+    fontSize: width * 0.04,
+    color: '#376787',
+  },
   button: {
+    marginTop: 20,
     backgroundColor: '#376787',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 20,
   },
-  buttonText: { color: '#fff', fontWeight: 'bold' },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: width * 0.045,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -150,8 +245,15 @@ const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
   },
-  modalText: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
-  modalButtons: { flexDirection: 'row', gap: 15 },
+  modalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 15,
+  },
   modalButton: {
     backgroundColor: '#376787',
     paddingVertical: 10,
@@ -159,5 +261,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
   },
-  modalButtonText: { color: '#fff', fontWeight: '600' },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
 });

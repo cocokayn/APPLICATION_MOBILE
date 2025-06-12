@@ -79,11 +79,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   backButton: {
+    
     marginBottom: 10,
   },
   backButtonText: {
-    color: '#000',
+    color: '#376787',
     fontSize: 16,
+    fontWeight:'bold',
   },
   title: {
     fontSize: 22,

@@ -1,8 +1,8 @@
-// components/ContactScreen.js
-//jksdbflzih flse
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
+const { width, height } = Dimensions.get('window');
 
 export default function ContactScreen() {
   const navigation = useNavigation();
@@ -18,12 +18,15 @@ export default function ContactScreen() {
         <Text style={styles.backButtonText}>← Retour</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Contact a enlever</Text>
+      {/* Titre espacé */}
+      <View style={styles.titleWrapper}>
+        <Text style={styles.title}>Contact</Text>
+      </View>
 
       <View style={styles.contactItem}>
         <Text style={styles.label}>Email :</Text>
         <TouchableOpacity onPress={handleEmailPress}>
-          <Text style={styles.link}>president@epfprojets.com</Text>
+          <Text style={styles.link}>iris.berthelot@epfprojets.com</Text>
         </TouchableOpacity>
       </View>
 
@@ -43,24 +46,34 @@ export default function ContactScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
     backgroundColor: '#fff',
   },
   backButton: {
-    marginBottom: 10,
+    position: 'absolute',
+    top: height * 0.06,
+    left: '5%',
+    padding: 8,
+    zIndex: 10,
   },
   backButtonText: {
-    color: '#007bff',
-    fontSize: 16,
+    fontSize: width * 0.045,
+    color: '#376787',
+    fontWeight: 'bold',
+  },
+  titleWrapper: {
+    paddingTop: height * 0.12,
+    paddingHorizontal: '5%',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: width * 0.06,
     fontWeight: 'bold',
+    textAlign: 'center',
     marginBottom: 30,
   },
   contactItem: {
     marginBottom: 20,
+    paddingHorizontal: '5%',
   },
   label: {
     fontSize: 16,

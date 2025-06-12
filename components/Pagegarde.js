@@ -3,9 +3,6 @@ import { Text, View, StyleSheet, Image } from 'react-native';
 export default function Pagegarde() {
   return (
     <View style={styles.container}>
-      <Text style={styles.paragraph}>
-        Bienvenue
-      </Text>
       <Image style={styles.logo} source={require('../assets/Logo_blog.png')} />
     </View>
   );

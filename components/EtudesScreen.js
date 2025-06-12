@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  CheckBox,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -50,50 +50,40 @@ export default function EtudesScreen() {
   };
 
   const handleDeleteSelected = () => {
-    if (selectedStudies.length === 0) return;
-    const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
-    setStudies(remaining);
-    setSelectedStudies([]);
-    setDeleteMode(false);
-  };
+  if (selectedStudies.length === 0) {
+    Alert.alert('Aucune sélection', 'Sélectionnez au moins une étude à supprimer.');
+    return;
+  }
+
+  Alert.alert(
+    'Confirmer la suppression',
+    `Supprimer ${selectedStudies.length} étude(s) ?`,
+    [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: () => {
+          const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
+          setStudies(remaining);
+          setSelectedStudies([]);
+          setDeleteMode(false);
+          Alert.alert('Succès', 'Étude(s) supprimée(s)');
+        },
+      },
+    ]
+  );
+};
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>EPF Projets</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-          <Image source={require('../assets/para2.png')} style={styles.settingsIcon} />
-        </TouchableOpacity>
-      </View>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.sectionTitle}>Études disponibles</Text>
-
-        {/* Boutons globaux */}
-        <View style={styles.adminButtons}>
-          <TouchableOpacity
-            style={[styles.adminButton, { backgroundColor: '#28a745' }]}
-            onPress={() => navigation.navigate('AjouterEtude')}
-          >
-            <Text style={styles.adminButtonText}>Ajouter une étude</Text>
-          </TouchableOpacity>
-
-          {!deleteMode ? (
-            <TouchableOpacity
-              style={[styles.adminButton, { backgroundColor: '#d9534f' }]}
-              onPress={() => setDeleteMode(true)}
-            >
-              <Text style={styles.adminButtonText}>Supprimer une étude</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
-              onPress={handleDeleteSelected}
-            >
-              <Text style={styles.adminButtonText}>Confirmer suppression</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
+              <TouchableOpacity
+                style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
+                onPress={handleDeleteSelected} >
+              </TouchableOpacity>
 
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
@@ -116,7 +106,13 @@ export default function EtudesScreen() {
                 style={styles.checkboxCircle}
                 onPress={() => toggleStudySelection(item.id)}
               >
-                <View style={selectedStudies.includes(item.id) ? styles.checkboxSelected : styles.checkbox} />
+                <View
+                  style={
+                    selectedStudies.includes(item.id)
+                      ? styles.checkboxSelected
+                      : styles.checkbox
+                  }
+                />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -129,6 +125,37 @@ export default function EtudesScreen() {
           </View>
         ))}
       </ScrollView>
+
+      {deleteMode ? (
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.redButton} onPress={handleDeleteSelected}>
+            <Text style={styles.redButtonText}>Confirmer suppression</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.redButton, { backgroundColor: '#aaa' }]}
+            onPress={() => {
+              setDeleteMode(false);
+              setSelectedStudies([]);
+            }}
+          >
+            <Text style={styles.redButtonText}>Annuler</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.greenButton}
+            onPress={() => navigation.navigate('AjouterEtude')}
+          >
+            <Text style={styles.greenButtonText}>Ajouter une étude</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.redButton} onPress={() => setDeleteMode(true)}>
+            <Text style={styles.redButtonText}>Supprimer une étude</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -144,15 +171,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
   },
   headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#376787' },
-  settingsIcon: { width: 24, height: 24, tintColor: '#376787' },
-  container: { padding: 20 },
+  container: { padding: 20, paddingBottom: 120 },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2A2A2A',
-    marginBottom: 15,
-    alignSelf: 'center',
-  },
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#2A2A2A',
+  marginBottom: 15,
+  textAlign: 'center',
+},
   card: {
     flexDirection: 'row',
     backgroundColor: '#f2f2f2',
@@ -181,20 +207,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   buttonText: { color: '#fff', fontWeight: '600', fontSize: 13 },
-  adminButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  adminButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-  },
-  adminButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
   checkboxCircle: {
     alignSelf: 'center',
     marginLeft: 10,
@@ -214,5 +226,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#376787',
     borderWidth: 2,
     borderColor: '#376787',
+  },
+
+  actionButtons: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+    gap: 12,
+  },
+  redButton: {
+    backgroundColor: '#e53935',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  greenButton: {
+    backgroundColor: '#008000',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  redButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  greenButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
   },
 });

@@ -16,7 +16,7 @@ import EtudesDetailScreen from './components/EtudesDetailScreen';
 import EvenementsScreen from './components/EvenementsScreen';
 import InfosPersoScreen from './components/InfosPersoScreen';
 import HistoriqueScreen from './components/HistoriqueScreen';
-import PreferenceScreen from './components/PreferenceScreen'; // en haut du fichier
+import PreferenceScreen from './components/PreferenceScreen'; 
 import ConditionsUtilScreen from './components/ConditionsutilScreen';
 import QuiSommesNousScreen from './components/QuiSommesNousScreen';
 import ContactScreen from './components/ContactScreen';
@@ -25,7 +25,6 @@ import ModifEvenementScreen from './components/ModifEvenementScreen';
 import CreationEventScreen from './components/CreationEventScreen';
 import AjouterEtudeScreen from './components/AjouterEtudeScreen';
 import ModifierEtudeScreen from './components/ModifierEtudeScreen';
-import SupprimerEtude from './components/SupprimerEtude';
 import ConsulterCandidatScreen from './components/ConsulterCandidatScreen';
 
 const Stack = createNativeStackNavigator();
@@ -35,7 +34,7 @@ const Tab = createBottomTabNavigator();
 function HomeScreen() {
   return (
     <>
-      <Pagegarde />
+     <Pagegarde/>
       <NewsList />
     </>
   );
@@ -80,11 +79,7 @@ export default function App() {
         <Stack.Screen name="Détail Article" component={NewsDetail} />
         <Stack.Screen name="Preferences" component={PreferenceScreen} options={{ title: 'Préférences' }} />
         <Stack.Screen name="QuiSommesNous" component={QuiSommesNousScreen} />
-        <Stack.Screen
-          name="EtudesDetail"
-          component={EtudesDetailScreen}
-          options={{ headerShown: true, title: 'Détail de l’étude' }}
-        />
+        <Stack.Screen name="EtudesDetail" component={EtudesDetailScreen} />
         <Stack.Screen name="InfosPerso" component={InfosPersoScreen} options={{ title: 'Infos personnelles' }} />
         <Stack.Screen name="Historique" component={HistoriqueScreen} options={{ title: 'Historique' }} />
         <Stack.Screen name="ConditionsUtil" component={ConditionsUtilScreen} options={{ headerShown: false }}/>

@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   settingsIcon: {
     width: 24,
     height: 24,
-    tintColor: '#007bff',
+    tintColor: '#376787',
   },
   container: {
     padding: 20,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   editAvatarText: {
-    color: '#007bff',
+    color: '#376787',
     marginBottom: 5,
     fontSize: 20,
     fontWeight: '500',
@@ -186,7 +186,6 @@ const styles = StyleSheet.create({
   },
   cardValue: {
     fontSize: 18,
-    fontWeight: 'bold',
   },
   badgeList: {
     flexDirection: 'row',
@@ -222,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   button: {
-    backgroundColor: '#ADD8E6',
+    backgroundColor: '#376787',
     padding: 15,
     borderRadius: 20,
     alignItems: 'center',
@@ -265,7 +264,7 @@ const styles = StyleSheet.create({
   modalButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#007bff',
+    backgroundColor: '#376787',
     borderRadius: 10,
   },
   modalButtonText: {
