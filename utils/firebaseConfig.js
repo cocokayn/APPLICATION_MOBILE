@@ -1,21 +1,30 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// firebaseConfig.js
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import 'firebase/compat/auth'
+import { getFirestore } from 'firebase/firestore';
+import firebase from 'firebase/compat/app'
+
+// ✅ Ta configuration Firebase (valide)
 const firebaseConfig = {
   apiKey: "AIzaSyD1CyQqXP6shj9xw6H66eEb_XiwxqfIbo0",
   authDomain: "epf-projet.firebaseapp.com",
   projectId: "epf-projet",
-  storageBucket: "epf-projet.firebasestorage.app",
+  storageBucket: "epf-projet.appspot.com",
   messagingSenderId: "601153087074",
-  appId: "1:601153087074:web:cd9143b8f3c34c5f55533b",
-  measurementId: "G-FRWGVC6QQ5"
+  appId: "1:601153087074:web:cd9143b8f3c34c5f55533b"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+if (!firebase.apps.length){
+  firebase.initializeApp(firebaseConfig);
+}
+// ✅ Initialisation sécurisée (évite les doublons)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+// ✅ Export des services Firebase à utiliser dans l'app
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+export { app, auth, db };

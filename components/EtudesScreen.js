@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../utils/firebaseConfig';
 
 export default function EtudesScreen() {
   const navigation = useNavigation();
@@ -17,30 +19,19 @@ export default function EtudesScreen() {
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedStudies, setSelectedStudies] = useState([]);
 
+  // 🔁 Ecoute Firestore en temps réel
   useEffect(() => {
-    const mockData = [
-      {
-        id: '1',
-        domaine: 'IT & Digital',
-        duree: '1j',
-        titre: 'Site Internet pour Orange',
-        deadline: '2025-08-01',
-        description: 'Créer un site vitrine pour Orange.',
-        competences: 'HTML, CSS, UX',
-        jeh: 8,
-      },
-      {
-        id: '2',
-        domaine: 'Ingénierie & RSE',
-        duree: '3j',
-        titre: 'Bilan carbone pour la mairie de Buc',
-        deadline: '2025-07-15',
-        description: 'Établir un diagnostic environnemental.',
-        competences: 'Excel, Analyse environnementale',
-        jeh: 12,
-      },
-    ];
-    setStudies(mockData);
+    const unsubscribe = onSnapshot(collection(db, 'etudes'), (snapshot) => {
+      const etudesFirestore = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setStudies(etudesFirestore);
+    }, (error) => {
+      console.error('Erreur récupération temps réel études Firestore :', error);
+    });
+
+    return () => unsubscribe(); // Nettoyage du listener
   }, []);
 
   const toggleStudySelection = (id) => {
@@ -50,30 +41,12 @@ export default function EtudesScreen() {
   };
 
   const handleDeleteSelected = () => {
-  if (selectedStudies.length === 0) {
-    Alert.alert('Aucune sélection', 'Sélectionnez au moins une étude à supprimer.');
-    return;
-  }
-
-  Alert.alert(
-    'Confirmer la suppression',
-    `Supprimer ${selectedStudies.length} étude(s) ?`,
-    [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: () => {
-          const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
-          setStudies(remaining);
-          setSelectedStudies([]);
-          setDeleteMode(false);
-          Alert.alert('Succès', 'Étude(s) supprimée(s)');
-        },
-      },
-    ]
-  );
-};
+    if (selectedStudies.length === 0) return;
+    const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
+    setStudies(remaining);
+    setSelectedStudies([]);
+    setDeleteMode(false);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
