@@ -60,7 +60,7 @@ export default function EtudesScreen() {
     <SafeAreaView style={styles.safeArea}>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.sectionTitle}>Études disponibles - EPF Projets</Text>
+        <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
               <TouchableOpacity
                 style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
                 onPress={handleDeleteSelected} >
@@ -154,12 +154,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#376787' },
   container: { padding: 20, paddingBottom: 120 },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2A2A2A',
-    marginBottom: 15,
-    alignSelf: 'center',
-  },
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#2A2A2A',
+  marginBottom: 15,
+  textAlign: 'center',
+},
   card: {
     flexDirection: 'row',
     backgroundColor: '#f2f2f2',
