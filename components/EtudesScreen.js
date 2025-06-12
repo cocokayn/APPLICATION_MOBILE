@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  CheckBox,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../utils/firebaseConfig';
 
 export default function EtudesScreen() {
   const navigation = useNavigation();
@@ -18,29 +20,23 @@ export default function EtudesScreen() {
   const [selectedStudies, setSelectedStudies] = useState([]);
 
   useEffect(() => {
-    const mockData = [
-      {
-        id: '1',
-        domaine: 'IT & Digital',
-        duree: '1j',
-        titre: 'Site Internet pour Orange',
-        deadline: '2025-08-01',
-        description: 'Créer un site vitrine pour Orange.',
-        competences: 'HTML, CSS, UX',
-        jeh: 8,
-      },
-      {
-        id: '2',
-        domaine: 'Ingénierie & RSE',
-        duree: '3j',
-        titre: 'Bilan carbone pour la mairie de Buc',
-        deadline: '2025-07-15',
-        description: 'Établir un diagnostic environnemental.',
-        competences: 'Excel, Analyse environnementale',
-        jeh: 12,
-      },
-    ];
-    setStudies(mockData);
+    const fetchStudies = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'etudes'));
+        const etudesFirestore = [];
+        querySnapshot.forEach((doc) => {
+          etudesFirestore.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+        setStudies(etudesFirestore);
+      } catch (error) {
+        console.error('Erreur récupération études Firestore :', error);
+      }
+    };
+
+    fetchStudies();
   }, []);
 
   const toggleStudySelection = (id) => {
@@ -69,7 +65,6 @@ export default function EtudesScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>Études disponibles</Text>
 
-        {/* Boutons globaux */}
         <View style={styles.adminButtons}>
           <TouchableOpacity
             style={[styles.adminButton, { backgroundColor: '#28a745' }]}
@@ -103,7 +98,7 @@ export default function EtudesScreen() {
 
             <View style={styles.content}>
               <Text style={styles.category}>
-                {item.domaine} • {item.duree}
+                {item.domaine} • {item.duree || 'N/A'}
               </Text>
               <Text style={styles.title}>{item.titre}</Text>
               {item.deadline && (
