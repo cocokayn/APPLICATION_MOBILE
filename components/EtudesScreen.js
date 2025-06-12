@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -49,18 +50,36 @@ export default function EtudesScreen() {
   };
 
   const handleDeleteSelected = () => {
-    if (selectedStudies.length === 0) return;
-    const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
-    setStudies(remaining);
-    setSelectedStudies([]);
-    setDeleteMode(false);
-  };
+  if (selectedStudies.length === 0) {
+    Alert.alert('Aucune sélection', 'Sélectionnez au moins une étude à supprimer.');
+    return;
+  }
+
+  Alert.alert(
+    'Confirmer la suppression',
+    `Supprimer ${selectedStudies.length} étude(s) ?`,
+    [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: () => {
+          const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
+          setStudies(remaining);
+          setSelectedStudies([]);
+          setDeleteMode(false);
+          Alert.alert('Succès', 'Étude(s) supprimée(s)');
+        },
+      },
+    ]
+  );
+};
 
   return (
     <SafeAreaView style={styles.safeArea}>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.sectionTitle}>Études disponibles - EPF Projets</Text>
+        <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
               <TouchableOpacity
                 style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
                 onPress={handleDeleteSelected} >
@@ -154,12 +173,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#376787' },
   container: { padding: 20, paddingBottom: 120 },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2A2A2A',
-    marginBottom: 15,
-    alignSelf: 'center',
-  },
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#2A2A2A',
+  marginBottom: 15,
+  textAlign: 'center',
+},
   card: {
     flexDirection: 'row',
     backgroundColor: '#f2f2f2',

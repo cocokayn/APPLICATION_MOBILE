@@ -8,8 +8,10 @@ export default function InfosPersoScreen() {
   const navigation = useNavigation();
 
   const [infos, setInfos] = useState({
-    nom: 'JB Berthon',
+    nom: 'Berthon',
+    prenom: 'Jean-Baptiste',
     email: 'jb@example.com',
+    mdp: 'mdp123',
     github: 'https://github.com/jbberthon',
     portfolio: 'https://jbberthon.dev',
   });
@@ -36,6 +38,13 @@ export default function InfosPersoScreen() {
           onChangeText={(text) => handleChange('nom', text)}
         />
 
+        <Text style={styles.label}>Prénom</Text>
+        <TextInput
+          style={styles.input}
+          value={infos.prenom}
+          onChangeText={(text) => handleChange('prenom', text)}
+        />
+
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
@@ -43,6 +52,13 @@ export default function InfosPersoScreen() {
           onChangeText={(text) => handleChange('email', text)}
           keyboardType="email-address"
           autoCapitalize="none"
+        />
+
+        <Text style={styles.label}>Mot de passe</Text>
+        <TextInput
+          style={styles.input}
+          value={infos.mdp}
+          onChangeText={(text) => handleChange('mdp', text)}
         />
 
         <Text style={styles.label}>GitHub</Text>

@@ -34,14 +34,14 @@ export default function EvenementsScreen() {
       {
         id: '2',
         titre: 'Conférence sur l’IA',
-        date: '2025-06-20',
+        date: '2025-06-22',
         lieu: 'EPF Cachan - Petit Amphi',
         description: 'Découverte des usages de l’intelligence artificielle.',
       },
       {
         id: '3',
         titre: 'Formation Firebase',
-        date: '2025-06-12',
+        date: '2025-06-29',
         lieu: 'EPF Cachan - Grand Amphi',
         description: 'Prise en main de Firebase pour les apps mobiles.',
       },
@@ -104,14 +104,14 @@ export default function EvenementsScreen() {
         ))}
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.redButton} onPress={handleModify}>
+          <TouchableOpacity style={styles.greenButton} onPress={handleAdd}>
+            <Text style={styles.redButtonText}>Ajouter un événement</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.orangeButton} onPress={handleModify}>
             <Text style={styles.redButtonText}>Modifier l’événement</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.redButton} onPress={handleDelete}>
             <Text style={styles.redButtonText}>Supprimer un événement</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.redButton} onPress={handleAdd}>
-            <Text style={styles.redButtonText}>Ajouter un événement</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -226,6 +226,18 @@ const styles = StyleSheet.create({
   },
   redButton: {
     backgroundColor: '#e53935',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  orangeButton: {
+    backgroundColor: '#FFA500',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  greenButton: {
+    backgroundColor: '#008000',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,

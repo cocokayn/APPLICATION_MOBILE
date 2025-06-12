@@ -118,11 +118,12 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   footer: {
-    position: 'absolute',
-    bottom: 10,
-    textAlign: 'center',
-    width: '100%',
-    fontSize: 12,
-    color: '#666',
+  position: 'absolute',
+  bottom: 10,
+  textAlign: 'center',
+  alignSelf: 'center', // ✅ ajout pour centrer horizontalement
+  width: '100%',
+  fontSize: 12,
+  color: '#666',
   },
 });

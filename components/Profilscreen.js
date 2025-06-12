@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   modalButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#007bff',
+    backgroundColor: '#376787',
     borderRadius: 10,
   },
   modalButtonText: {
