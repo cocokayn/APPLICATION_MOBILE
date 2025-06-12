@@ -1,14 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Modal } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth, db, storage } from '../utils/firebaseConfig'; // Ajouté storage ici
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function ProfileScreen() {
   const [badgesVisible, setBadgesVisible] = useState(false);
   const [avatar, setAvatar] = useState(require('../assets/avatar.png'));
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [badgeCount, setBadgeCount] = useState(3);
+  const [nom, setNom] = useState('');
+  const [prenom, setPrenom] = useState('');
   const navigation = useNavigation();
+
+  const [tempAvatar, setTempAvatar] = useState(null);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+
+  useEffect(() => {
+    const loadProfileData = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setNom(data.nom || '');
+          setPrenom(data.prenom || '');
+        }
+
+        const savedAvatar = await AsyncStorage.getItem('userAvatar');
+        if (savedAvatar) {
+          setAvatar({ uri: savedAvatar });
+        }
+      } catch (err) {
+        console.error('Erreur de chargement du profil :', err);
+      }
+    };
+
+    loadProfileData();
+  }, []);
 
   const toggleBadges = () => setBadgesVisible(!badgesVisible);
 
@@ -19,9 +54,44 @@ export default function ProfileScreen() {
       aspect: [1, 1],
       quality: 1,
     });
+
     if (!result.canceled) {
-      setAvatar({ uri: result.assets[0].uri });
+      const uri = result.assets[0].uri;
+      setTempAvatar(uri);
+      setConfirmModalVisible(true);
     }
+  };
+
+  const confirmAvatar = async () => {
+    const user = auth.currentUser;
+
+    if (user && tempAvatar) {
+      try {
+        const response = await fetch(tempAvatar);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `avatars/${user.uid}.jpg`);
+
+        await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(storageRef);
+
+        const docRef = doc(db, 'users', user.uid);
+        await setDoc(docRef, { photoURL: downloadURL }, { merge: true });
+
+        await AsyncStorage.setItem('userAvatar', downloadURL);
+        setAvatar({ uri: downloadURL });
+
+        setTempAvatar(null);
+        setConfirmModalVisible(false);
+
+      } catch (error) {
+        console.error("Erreur lors du changement d'avatar :", error);
+      }
+    }
+  };
+
+  const cancelAvatarChange = () => {
+    setTempAvatar(null);
+    setConfirmModalVisible(false);
   };
 
   const handleLogout = () => setLogoutModalVisible(true);
@@ -48,7 +118,7 @@ export default function ProfileScreen() {
           <Text style={styles.editAvatarText}>Modifier la photo de profil</Text>
         </TouchableOpacity>
 
-        <Text style={styles.name}>JB Berthon</Text>
+        <Text style={styles.name}>{prenom} {nom}</Text>
 
         <View style={styles.cardContainer}>
           <View style={styles.card}>
@@ -98,6 +168,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Modal déconnexion */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -117,6 +188,32 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal confirmation avatar */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={confirmModalVisible}
+        onRequestClose={cancelAvatarChange}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>Confirmer la nouvelle photo de profil ?</Text>
+            {tempAvatar && (
+              <Image source={{ uri: tempAvatar }} style={styles.confirmAvatarImage} />
+            )}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={confirmAvatar}>
+                <Text style={styles.modalButtonText}>Valider</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={cancelAvatarChange}>
+                <Text style={styles.modalButtonText}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -131,10 +228,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 30, // pour descendre légèrement
+    paddingTop: 30,
   },
   settingsButton: {
-    marginTop: 10, // descente du logo para2
+    marginTop: 10,
   },
   settingsIcon: {
     width: 24,
@@ -270,5 +367,11 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  confirmAvatarImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 20,
   },
 });
