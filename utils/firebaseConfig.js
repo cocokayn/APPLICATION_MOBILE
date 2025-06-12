@@ -4,6 +4,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import 'firebase/compat/auth'
 import { getFirestore } from 'firebase/firestore';
+import firebase from 'firebase/compat/app'
 
 // ✅ Ta configuration Firebase (valide)
 const firebaseConfig = {
@@ -15,6 +16,10 @@ const firebaseConfig = {
   appId: "1:601153087074:web:cd9143b8f3c34c5f55533b"
 };
 
+
+if (!firebase.apps.length){
+  firebase.initializeApp(firebaseConfig);
+}
 // ✅ Initialisation sécurisée (évite les doublons)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
