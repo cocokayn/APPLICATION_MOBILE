@@ -54,14 +54,22 @@ export default function EvenementsScreen() {
   const handleAdd = () => navigation.navigate('CreationEvent');
 
   const handleModify = () => {
-    setActionType('modifier');
-    setPickerModalVisible(true);
-  };
+  if (events.length === 0) {
+    Alert.alert('Aucun événement', 'Pas d’événement à modifier.');
+    return;
+  }
+  setActionType('modifier');
+  setPickerModalVisible(true);
+};
 
   const handleDelete = () => {
-    setActionType('supprimer');
-    setPickerModalVisible(true);
-  };
+  if (events.length === 0) {
+    Alert.alert('Aucun événement', 'Pas d’événement à supprimer.');
+    return;
+  }
+  setActionType('supprimer');
+  setPickerModalVisible(true);
+};
 
   const handleEventSelect = async (event) => {
     setPickerModalVisible(false);
