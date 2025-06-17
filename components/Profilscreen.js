@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Modal } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  Modal,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth, db, storage } from '../utils/firebaseConfig'; // Ajouté storage ici
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db } from '../utils/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function ProfileScreen() {
-  const [badgesVisible, setBadgesVisible] = useState(false);
-  const [avatar, setAvatar] = useState(require('../assets/avatar.png'));
+  const [avatar] = useState(require('../assets/avatar.png'));
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const [badgeCount, setBadgeCount] = useState(3);
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
   const navigation = useNavigation();
-
-  const [tempAvatar, setTempAvatar] = useState(null);
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 
   useEffect(() => {
     const loadProfileData = async () => {
@@ -32,11 +34,6 @@ export default function ProfileScreen() {
           setNom(data.nom || '');
           setPrenom(data.prenom || '');
         }
-
-        const savedAvatar = await AsyncStorage.getItem('userAvatar');
-        if (savedAvatar) {
-          setAvatar({ uri: savedAvatar });
-        }
       } catch (err) {
         console.error('Erreur de chargement du profil :', err);
       }
@@ -45,63 +42,12 @@ export default function ProfileScreen() {
     loadProfileData();
   }, []);
 
-  const toggleBadges = () => setBadgesVisible(!badgesVisible);
-
-  const changeAvatar = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setTempAvatar(uri);
-      setConfirmModalVisible(true);
-    }
-  };
-
-  const confirmAvatar = async () => {
-    const user = auth.currentUser;
-
-    if (user && tempAvatar) {
-      try {
-        const response = await fetch(tempAvatar);
-        const blob = await response.blob();
-        const storageRef = ref(storage, `avatars/${user.uid}.jpg`);
-
-        await uploadBytes(storageRef, blob);
-        const downloadURL = await getDownloadURL(storageRef);
-
-        const docRef = doc(db, 'users', user.uid);
-        await setDoc(docRef, { photoURL: downloadURL }, { merge: true });
-
-        await AsyncStorage.setItem('userAvatar', downloadURL);
-        setAvatar({ uri: downloadURL });
-
-        setTempAvatar(null);
-        setConfirmModalVisible(false);
-
-      } catch (error) {
-        console.error("Erreur lors du changement d'avatar :", error);
-      }
-    }
-  };
-
-  const cancelAvatarChange = () => {
-    setTempAvatar(null);
-    setConfirmModalVisible(false);
-  };
-
   const handleLogout = () => setLogoutModalVisible(true);
   const confirmLogout = () => {
     setLogoutModalVisible(false);
     navigation.navigate('Login');
   };
   const cancelLogout = () => setLogoutModalVisible(false);
-
-  const totalBadges = 10;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -113,10 +59,9 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity onPress={changeAvatar} style={styles.avatarContainer}>
+        <View style={styles.avatarContainer}>
           <Image source={avatar} style={styles.avatar} />
-          <Text style={styles.editAvatarText}>Modifier la photo de profil</Text>
-        </TouchableOpacity>
+        </View>
 
         <Text style={styles.name}>{prenom} {nom}</Text>
 
@@ -125,28 +70,6 @@ export default function ProfileScreen() {
             <Text style={styles.cardTitle}>Études réalisées</Text>
             <Text style={styles.cardValue}>12</Text>
           </View>
-
-          <TouchableOpacity style={styles.card} onPress={toggleBadges}>
-            <Text style={styles.cardTitle}>Badges obtenus</Text>
-            <Text style={styles.cardValue}>{badgeCount}</Text>
-            {badgesVisible && (
-              <View style={styles.badgeList}>
-                {Array.from({ length: totalBadges }).map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.badge,
-                      index < badgeCount ? styles.badgeObtained : styles.badgeEmpty,
-                    ]}
-                  >
-                    {index < badgeCount && (
-                      <Image source={require('../assets/Badges.png')} style={styles.badgeIcon} />
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
-          </TouchableOpacity>
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Nombre de JEH</Text>
@@ -188,32 +111,6 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* Modal confirmation avatar */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={confirmModalVisible}
-        onRequestClose={cancelAvatarChange}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Confirmer la nouvelle photo de profil ?</Text>
-            {tempAvatar && (
-              <Image source={{ uri: tempAvatar }} style={styles.confirmAvatarImage} />
-            )}
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButton} onPress={confirmAvatar}>
-                <Text style={styles.modalButtonText}>Valider</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={cancelAvatarChange}>
-                <Text style={styles.modalButtonText}>Annuler</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
     </SafeAreaView>
   );
 }
@@ -254,12 +151,6 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     marginBottom: 5,
   },
-  editAvatarText: {
-    color: '#376787',
-    marginBottom: 5,
-    fontSize: 20,
-    fontWeight: '500',
-  },
   name: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -283,34 +174,6 @@ const styles = StyleSheet.create({
   },
   cardValue: {
     fontSize: 18,
-  },
-  badgeList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10,
-    gap: 10,
-    justifyContent: 'center',
-  },
-  badge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeObtained: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-  },
-  badgeEmpty: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#ccc',
-  },
-  badgeIcon: {
-    width: 24,
-    height: 24,
   },
   buttonContainer: {
     width: '100%',
@@ -367,11 +230,5 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-  },
-  confirmAvatarImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 20,
   },
 });
