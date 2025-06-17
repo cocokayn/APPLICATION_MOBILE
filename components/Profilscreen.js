@@ -1,28 +1,46 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Modal } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  Modal,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth, db } from '../utils/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function ProfileScreen() {
-  const [badgesVisible, setBadgesVisible] = useState(false);
-  const [avatar, setAvatar] = useState(require('../assets/avatar.png'));
+  const [avatar] = useState(require('../assets/avatar.png'));
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const [badgeCount, setBadgeCount] = useState(3);
+  const [nom, setNom] = useState('');
+  const [prenom, setPrenom] = useState('');
   const navigation = useNavigation();
 
-  const toggleBadges = () => setBadgesVisible(!badgesVisible);
+  useEffect(() => {
+    const loadProfileData = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
 
-  const changeAvatar = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-    if (!result.canceled) {
-      setAvatar({ uri: result.assets[0].uri });
-    }
-  };
+      try {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setNom(data.nom || '');
+          setPrenom(data.prenom || '');
+        }
+      } catch (err) {
+        console.error('Erreur de chargement du profil :', err);
+      }
+    };
+
+    loadProfileData();
+  }, []);
 
   const handleLogout = () => setLogoutModalVisible(true);
   const confirmLogout = () => {
@@ -30,8 +48,6 @@ export default function ProfileScreen() {
     navigation.navigate('Login');
   };
   const cancelLogout = () => setLogoutModalVisible(false);
-
-  const totalBadges = 10;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -43,40 +59,17 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity onPress={changeAvatar} style={styles.avatarContainer}>
+        <View style={styles.avatarContainer}>
           <Image source={avatar} style={styles.avatar} />
-          <Text style={styles.editAvatarText}>Modifier la photo de profil</Text>
-        </TouchableOpacity>
+        </View>
 
-        <Text style={styles.name}>JB Berthon</Text>
+        <Text style={styles.name}>{prenom} {nom}</Text>
 
         <View style={styles.cardContainer}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Études réalisées</Text>
             <Text style={styles.cardValue}>12</Text>
           </View>
-
-          <TouchableOpacity style={styles.card} onPress={toggleBadges}>
-            <Text style={styles.cardTitle}>Badges obtenus</Text>
-            <Text style={styles.cardValue}>{badgeCount}</Text>
-            {badgesVisible && (
-              <View style={styles.badgeList}>
-                {Array.from({ length: totalBadges }).map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.badge,
-                      index < badgeCount ? styles.badgeObtained : styles.badgeEmpty,
-                    ]}
-                  >
-                    {index < badgeCount && (
-                      <Image source={require('../assets/Badges.png')} style={styles.badgeIcon} />
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
-          </TouchableOpacity>
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Nombre de JEH</Text>
@@ -98,6 +91,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Modal déconnexion */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -131,10 +125,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 30, // pour descendre légèrement
+    paddingTop: 30,
   },
   settingsButton: {
-    marginTop: 10, // descente du logo para2
+    marginTop: 10,
   },
   settingsIcon: {
     width: 24,
@@ -156,12 +150,6 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     marginBottom: 5,
-  },
-  editAvatarText: {
-    color: '#376787',
-    marginBottom: 5,
-    fontSize: 20,
-    fontWeight: '500',
   },
   name: {
     fontSize: 22,
@@ -186,34 +174,6 @@ const styles = StyleSheet.create({
   },
   cardValue: {
     fontSize: 18,
-  },
-  badgeList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10,
-    gap: 10,
-    justifyContent: 'center',
-  },
-  badge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeObtained: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-  },
-  badgeEmpty: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#ccc',
-  },
-  badgeIcon: {
-    width: 24,
-    height: 24,
   },
   buttonContainer: {
     width: '100%',

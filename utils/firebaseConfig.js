@@ -5,6 +5,10 @@ import { getAuth } from 'firebase/auth';
 import 'firebase/compat/auth'
 import { getFirestore } from 'firebase/firestore';
 import firebase from 'firebase/compat/app'
+import { updatePassword } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../utils/firebaseConfig'; // <-- assure-toi que le fichier exporte `storage`
+
 
 // ✅ Ta configuration Firebase (valide)
 const firebaseConfig = {
@@ -26,5 +30,6 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // ✅ Export des services Firebase à utiliser dans l'app
 const auth = getAuth(app);
 const db = getFirestore(app);
+
 
 export { app, auth, db };

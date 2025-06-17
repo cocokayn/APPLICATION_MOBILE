@@ -1,23 +1,75 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { auth, db } from '../utils/firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { updatePassword } from 'firebase/auth';
 
 const { width, height } = Dimensions.get('window');
 
 export default function InfosPersoScreen() {
   const navigation = useNavigation();
-
   const [infos, setInfos] = useState({
-    nom: 'Berthon',
-    prenom: 'Jean-Baptiste',
-    email: 'jb@example.com',
-    mdp: 'mdp123',
-    github: 'https://github.com/jbberthon',
-    portfolio: 'https://jbberthon.dev',
+    nom: '',
+    prenom: '',
+    email: '',
+    github: '',
+    portfolio: '',
   });
+  const [newPassword, setNewPassword] = useState('');
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      setUserId(user.uid);
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setInfos(userDoc.data());
+        }
+      } catch (error) {
+        console.error('Erreur de récupération des données :', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleChange = (field, value) => {
     setInfos((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!userId) return;
+
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        nom: infos.nom,
+        prenom: infos.prenom,
+        email: infos.email,
+        github: infos.github,
+        portfolio: infos.portfolio,
+      });
+
+      if (newPassword.trim() !== '') {
+        await updatePassword(auth.currentUser, newPassword);
+        Alert.alert('Succès', 'Mot de passe mis à jour.');
+      } else {
+        Alert.alert('Succès', 'Informations mises à jour.');
+      }
+
+    } catch (error) {
+      console.error(error);
+      if (error.code === 'auth/requires-recent-login') {
+        Alert.alert('Erreur', 'Reconnectez-vous pour changer le mot de passe.');
+      } else {
+        Alert.alert('Erreur', error.message || 'Une erreur est survenue.');
+      }
+    }
   };
 
   return (
@@ -32,18 +84,10 @@ export default function InfosPersoScreen() {
 
       <View style={styles.card}>
         <Text style={styles.label}>Nom</Text>
-        <TextInput
-          style={styles.input}
-          value={infos.nom}
-          onChangeText={(text) => handleChange('nom', text)}
-        />
+        <TextInput style={styles.input} value={infos.nom} onChangeText={(text) => handleChange('nom', text)} />
 
         <Text style={styles.label}>Prénom</Text>
-        <TextInput
-          style={styles.input}
-          value={infos.prenom}
-          onChangeText={(text) => handleChange('prenom', text)}
-        />
+        <TextInput style={styles.input} value={infos.prenom} onChangeText={(text) => handleChange('prenom', text)} />
 
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -54,30 +98,22 @@ export default function InfosPersoScreen() {
           autoCapitalize="none"
         />
 
-        <Text style={styles.label}>Mot de passe</Text>
-        <TextInput
-          style={styles.input}
-          value={infos.mdp}
-          onChangeText={(text) => handleChange('mdp', text)}
-        />
-
         <Text style={styles.label}>GitHub</Text>
-        <TextInput
-          style={styles.input}
-          value={infos.github}
-          onChangeText={(text) => handleChange('github', text)}
-          autoCapitalize="none"
-        />
+        <TextInput style={styles.input} value={infos.github} onChangeText={(text) => handleChange('github', text)} />
 
         <Text style={styles.label}>Portfolio</Text>
+        <TextInput style={styles.input} value={infos.portfolio} onChangeText={(text) => handleChange('portfolio', text)} />
+
+        <Text style={styles.label}>Nouveau mot de passe</Text>
         <TextInput
           style={styles.input}
-          value={infos.portfolio}
-          onChangeText={(text) => handleChange('portfolio', text)}
-          autoCapitalize="none"
+          value={newPassword}
+          onChangeText={setNewPassword}
+          secureTextEntry
+          placeholder="Laisser vide pour ne pas modifier"
         />
 
-        <TouchableOpacity style={styles.saveButton}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>Enregistrer les modifications</Text>
         </TouchableOpacity>
       </View>
@@ -86,10 +122,7 @@ export default function InfosPersoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
   backButton: {
     position: 'absolute',
     top: height * 0.06,
