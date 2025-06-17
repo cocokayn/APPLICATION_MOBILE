@@ -13,11 +13,15 @@ import { useNavigation } from '@react-navigation/native';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
 
+import { auth } from '../utils/firebaseConfig'; // Import de l'auth Firebase
+import { adminEmails } from '../utils/adminConfig'; // Liste des emails admin
+
 export default function EtudesScreen() {
   const navigation = useNavigation();
   const [studies, setStudies] = useState([]);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedStudies, setSelectedStudies] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // 🔁 Ecoute Firestore en temps réel
   useEffect(() => {
@@ -34,6 +38,18 @@ export default function EtudesScreen() {
     return () => unsubscribe(); // Nettoyage du listener
   }, []);
 
+  // Vérification si user est admin
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user && adminEmails.includes(user.email)) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+      setDeleteMode(false);      // Enlever mode suppression si pas admin
+      setSelectedStudies([]);    // Clear sélection aussi
+    }
+  }, [auth.currentUser]); // à modifier si besoin (sinon ajouter listener auth)
+
   const toggleStudySelection = (id) => {
     setSelectedStudies((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
@@ -46,17 +62,13 @@ export default function EtudesScreen() {
     setStudies(remaining);
     setSelectedStudies([]);
     setDeleteMode(false);
+    // TODO: supprimer aussi dans Firestore si tu veux (ajoute ici la suppression)
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
-              <TouchableOpacity
-                style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
-                onPress={handleDeleteSelected} >
-              </TouchableOpacity>
 
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
@@ -99,35 +111,38 @@ export default function EtudesScreen() {
         ))}
       </ScrollView>
 
-      {deleteMode ? (
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.redButton} onPress={handleDeleteSelected}>
-            <Text style={styles.redButtonText}>Confirmer suppression</Text>
-          </TouchableOpacity>
+      {/* --- AFFICHER SEULEMENT POUR ADMIN --- */}
+      {isAdmin && (
+        deleteMode ? (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.redButton} onPress={handleDeleteSelected}>
+              <Text style={styles.redButtonText}>Confirmer suppression</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.redButton, { backgroundColor: '#aaa' }]}
-            onPress={() => {
-              setDeleteMode(false);
-              setSelectedStudies([]);
-            }}
-          >
-            <Text style={styles.redButtonText}>Annuler</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.greenButton}
-            onPress={() => navigation.navigate('AjouterEtude')}
-          >
-            <Text style={styles.greenButtonText}>Ajouter une étude</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.redButton, { backgroundColor: '#aaa' }]}
+              onPress={() => {
+                setDeleteMode(false);
+                setSelectedStudies([]);
+              }}
+            >
+              <Text style={styles.redButtonText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.greenButton}
+              onPress={() => navigation.navigate('AjouterEtude')}
+            >
+              <Text style={styles.greenButtonText}>Ajouter une étude</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={styles.redButton} onPress={() => setDeleteMode(true)}>
-            <Text style={styles.redButtonText}>Supprimer une étude</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity style={styles.redButton} onPress={() => setDeleteMode(true)}>
+              <Text style={styles.redButtonText}>Supprimer une étude</Text>
+            </TouchableOpacity>
+          </View>
+        )
       )}
     </SafeAreaView>
   );
@@ -135,23 +150,14 @@ export default function EtudesScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#376787' },
   container: { padding: 20, paddingBottom: 120 },
   sectionTitle: {
-  fontSize: 20,
-  fontWeight: 'bold',
-  color: '#2A2A2A',
-  marginBottom: 15,
-  textAlign: 'center',
-},
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
   card: {
     flexDirection: 'row',
     backgroundColor: '#f2f2f2',

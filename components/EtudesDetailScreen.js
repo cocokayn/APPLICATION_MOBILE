@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,10 @@ import {
   Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { auth, firestore } from '../utils/firebaseConfig';
-import { collection, doc, getDoc, getDocs, addDoc, query, where } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../utils/firebaseConfig';
+import { adminEmails } from '../utils/adminConfig';
 
 const { width, height } = Dimensions.get('window');
 
@@ -19,73 +21,79 @@ export default function EtudesDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const study = route.params?.study;
-  const userRole = 'admin';
 
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [candidats, setCandidats] = useState([]);
 
-  const fetchCandidats = async () => {
-    try {
-      const q = query(
-        collection(firestore, 'postulations'),
-        where('studyId', '==', study.id)
-      );
-      const querySnapshot = await getDocs(q);
-      const candidatsData = [];
-
-      for (const docSnap of querySnapshot.docs) {
-        const data = docSnap.data();
-        const userRef = doc(firestore, 'users', data.userId);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          candidatsData.push({
-            id: data.userId,
-            nom: `${userData.prenom} ${userData.nom}`,
-          });
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        setIsAdmin(adminEmails.includes(user.email));
+        if (study?.id) {
+          fetchCandidats();
         }
       }
+    });
+    return unsubscribe;
+  }, [study?.id]); // Relance quand study.id change
 
-      setCandidats(candidatsData);
+  const fetchCandidats = async () => {
+    if (!study?.id) return;
+    try {
+      const candidatsRef = collection(db, 'etudes', study.id, 'candidats');
+      const snapshot = await getDocs(candidatsRef);
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCandidats(list);
     } catch (error) {
-      console.error('Erreur lors de la récupération des candidats :', error);
+      console.log('Erreur lors du chargement des candidats :', error);
     }
   };
-
-  useEffect(() => {
-    if (study?.id) {
-      fetchCandidats();
-    }
-  }, [study]);
 
   const handlePostuler = () => {
     setConfirmModalVisible(true);
   };
 
   const confirmPostulation = async () => {
+    setConfirmModalVisible(false);
+    if (!currentUser || !study?.id) return;
+
     try {
-      const user = auth.currentUser;
-      if (!user) return;
+      // Récupération info utilisateur
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
 
-      const userRef = doc(firestore, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-
-        await addDoc(collection(firestore, 'postulations'), {
-          studyId: study.id,
-          userId: user.uid,
-          timestamp: new Date(),
-        });
-
-        setConfirmModalVisible(false);
-        setSuccessModalVisible(true);
-        fetchCandidats(); // Rafraîchir la liste
+      if (!userDocSnap.exists()) {
+        alert('Impossible de récupérer tes informations utilisateur.');
+        return;
       }
+      const userInfo = userDocSnap.data();
+
+      // Vérifier si déjà candidat
+      const candidatDocRef = doc(db, 'etudes', study.id, 'candidats', currentUser.uid);
+      const candidatDocSnap = await getDoc(candidatDocRef);
+
+      if (candidatDocSnap.exists()) {
+        alert('Tu as déjà postulé à cette étude.');
+        return;
+      }
+
+      // Ajout candidature
+      const candidat = {
+        id: currentUser.uid,
+        nom: userInfo.nom,
+        prenom: userInfo.prenom,
+      };
+
+      await setDoc(candidatDocRef, candidat);
+      await fetchCandidats();
+      setSuccessModalVisible(true);
     } catch (error) {
-      console.error('Erreur lors de la postulation :', error);
+      console.log('Erreur lors de la postulation :', error);
+      alert('Une erreur est survenue lors de la postulation.');
     }
   };
 
@@ -114,7 +122,9 @@ export default function EtudesDetailScreen() {
       <View style={styles.card}>
         <Text style={styles.studyTitle}>{study.titre}</Text>
         <Text style={styles.subTitle}>{study.domaine} • {study.duree}</Text>
-        {study.deadline && <Text style={styles.deadline}>Date limite : {study.deadline}</Text>}
+        {study.deadline && (
+          <Text style={styles.deadline}>Date limite : {study.deadline}</Text>
+        )}
 
         <Text style={styles.sectionTitle}>Description</Text>
         <Text style={styles.text}>{study.description}</Text>
@@ -125,7 +135,7 @@ export default function EtudesDetailScreen() {
         <Text style={styles.sectionTitle}>Nombre de JEH</Text>
         <Text style={styles.text}>{study.jeh}</Text>
 
-        {userRole === 'admin' && (
+        {isAdmin && (
           <>
             <Text style={styles.sectionTitle}>Voir les candidats :</Text>
             <View style={styles.scrollCandidates}>
@@ -137,7 +147,7 @@ export default function EtudesDetailScreen() {
                     style={styles.candidatItem}
                     onPress={() => handleCandidatPress(item)}
                   >
-                    <Text style={styles.candidatName}>{item.nom}</Text>
+                    <Text style={styles.candidatName}>{item.prenom} {item.nom}</Text>
                   </TouchableOpacity>
                 )}
               />
@@ -145,7 +155,7 @@ export default function EtudesDetailScreen() {
           </>
         )}
 
-        {userRole === 'admin' && (
+        {isAdmin && (
           <TouchableOpacity
             style={[styles.button, { backgroundColor: '#e67e22' }]}
             onPress={() => navigation.navigate('ModifierEtude', { study })}
@@ -180,13 +190,10 @@ export default function EtudesDetailScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalText}>Ta candidature a bien été enregistrée ✅</Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => {
-                setSuccessModalVisible(false);
-                navigation.goBack();
-              }}
-            >
+            <TouchableOpacity style={styles.modalButton} onPress={() => {
+              setSuccessModalVisible(false);
+              navigation.goBack();
+            }}>
               <Text style={styles.modalButtonText}>Fermer</Text>
             </TouchableOpacity>
           </View>
