@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   Modal,
   FlatList,
   Dimensions,
-  ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { auth, firestore } from '../utils/firebaseConfig';
+import { collection, doc, getDoc, getDocs, addDoc, query, where } from 'firebase/firestore';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,20 +23,70 @@ export default function EtudesDetailScreen() {
 
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [candidats, setCandidats] = useState([]);
 
-  const candidats = [
-    { id: '1', nom: 'Alexis Bidault' },
-    { id: '2', nom: 'Julie Martin' },
-    { id: '3', nom: 'Thomas Dupuis' },
-  ];
+  const fetchCandidats = async () => {
+    try {
+      const q = query(
+        collection(firestore, 'postulations'),
+        where('studyId', '==', study.id)
+      );
+      const querySnapshot = await getDocs(q);
+      const candidatsData = [];
+
+      for (const docSnap of querySnapshot.docs) {
+        const data = docSnap.data();
+        const userRef = doc(firestore, 'users', data.userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          candidatsData.push({
+            id: data.userId,
+            nom: `${userData.prenom} ${userData.nom}`,
+          });
+        }
+      }
+
+      setCandidats(candidatsData);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des candidats :', error);
+    }
+  };
+
+  useEffect(() => {
+    if (study?.id) {
+      fetchCandidats();
+    }
+  }, [study]);
 
   const handlePostuler = () => {
     setConfirmModalVisible(true);
   };
 
-  const confirmPostulation = () => {
-    setConfirmModalVisible(false);
-    setSuccessModalVisible(true);
+  const confirmPostulation = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userRef = doc(firestore, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+
+        await addDoc(collection(firestore, 'postulations'), {
+          studyId: study.id,
+          userId: user.uid,
+          timestamp: new Date(),
+        });
+
+        setConfirmModalVisible(false);
+        setSuccessModalVisible(true);
+        fetchCandidats(); // Rafraîchir la liste
+      }
+    } catch (error) {
+      console.error('Erreur lors de la postulation :', error);
+    }
   };
 
   const handleCandidatPress = (candidat) => {
@@ -56,61 +107,57 @@ export default function EtudesDetailScreen() {
         <Text style={styles.backText}>← Retour</Text>
       </TouchableOpacity>
 
-      <View>
-  <View style={styles.titleWrapper}>
-    <Text style={styles.title}>Détail de l'étude</Text>
-  </View>
+      <View style={styles.titleWrapper}>
+        <Text style={styles.title}>Détail de l'étude</Text>
+      </View>
 
-  <View style={styles.card}>
-    <Text style={styles.studyTitle}>{study.titre}</Text>
-    <Text style={styles.subTitle}>{study.domaine} • {study.duree}</Text>
-    {study.deadline && (
-      <Text style={styles.deadline}>Date limite : {study.deadline}</Text>
-    )}
+      <View style={styles.card}>
+        <Text style={styles.studyTitle}>{study.titre}</Text>
+        <Text style={styles.subTitle}>{study.domaine} • {study.duree}</Text>
+        {study.deadline && <Text style={styles.deadline}>Date limite : {study.deadline}</Text>}
 
-    <Text style={styles.sectionTitle}>Description</Text>
-    <Text style={styles.text}>{study.description}</Text>
+        <Text style={styles.sectionTitle}>Description</Text>
+        <Text style={styles.text}>{study.description}</Text>
 
-    <Text style={styles.sectionTitle}>Compétences requises</Text>
-    <Text style={styles.text}>{study.competences}</Text>
+        <Text style={styles.sectionTitle}>Compétences requises</Text>
+        <Text style={styles.text}>{study.competences}</Text>
 
-    <Text style={styles.sectionTitle}>Nombre de JEH</Text>
-    <Text style={styles.text}>{study.jeh}</Text>
+        <Text style={styles.sectionTitle}>Nombre de JEH</Text>
+        <Text style={styles.text}>{study.jeh}</Text>
 
-    {userRole === 'admin' && (
-      <>
-        <Text style={styles.sectionTitle}>Voir les candidats :</Text>
-        <View style={styles.scrollCandidates}>
-          <FlatList
-            data={candidats}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.candidatItem}
-                onPress={() => handleCandidatPress(item)}
-              >
-                <Text style={styles.candidatName}>{item.nom}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </>
-    )}
+        {userRole === 'admin' && (
+          <>
+            <Text style={styles.sectionTitle}>Voir les candidats :</Text>
+            <View style={styles.scrollCandidates}>
+              <FlatList
+                data={candidats}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.candidatItem}
+                    onPress={() => handleCandidatPress(item)}
+                  >
+                    <Text style={styles.candidatName}>{item.nom}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </>
+        )}
 
-    {userRole === 'admin' && (
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#e67e22' }]}
-        onPress={() => navigation.navigate('ModifierEtude', { study })}
-      >
-        <Text style={styles.buttonText}>Modifier cette étude</Text>
-      </TouchableOpacity>
-    )}
+        {userRole === 'admin' && (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#e67e22' }]}
+            onPress={() => navigation.navigate('ModifierEtude', { study })}
+          >
+            <Text style={styles.buttonText}>Modifier cette étude</Text>
+          </TouchableOpacity>
+        )}
 
-    <TouchableOpacity style={styles.button} onPress={handlePostuler}>
-      <Text style={styles.buttonText}>Postuler à cette étude</Text>
-    </TouchableOpacity>
-  </View>
-</View>
+        <TouchableOpacity style={styles.button} onPress={handlePostuler}>
+          <Text style={styles.buttonText}>Postuler à cette étude</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Modals */}
       <Modal transparent visible={confirmModalVisible} animationType="fade">
@@ -133,10 +180,13 @@ export default function EtudesDetailScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalText}>Ta candidature a bien été enregistrée ✅</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={() => {
-              setSuccessModalVisible(false);
-              navigation.goBack();
-            }}>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setSuccessModalVisible(false);
+                navigation.goBack();
+              }}
+            >
               <Text style={styles.modalButtonText}>Fermer</Text>
             </TouchableOpacity>
           </View>
@@ -148,14 +198,11 @@ export default function EtudesDetailScreen() {
 
 const styles = StyleSheet.create({
   scrollCandidates: {
-  maxHeight: 150,
-},
+    maxHeight: 150,
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  scrollContent: {
-    paddingBottom: 40,
   },
   backButton: {
     position: 'absolute',
