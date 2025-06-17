@@ -75,6 +75,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="CreerCompte" component={CreerCompte} />
+        <Stack.Screen name="EvenementsScreen" component={EvenementsScreen} />
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen name="Détail Article" component={NewsDetail} />
         <Stack.Screen name="Preferences" component={PreferenceScreen} options={{ title: 'Préférences' }} />

@@ -7,14 +7,16 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
 
 import { auth } from '../utils/firebaseConfig'; // Import de l'auth Firebase
 import { adminEmails } from '../utils/adminConfig'; // Liste des emails admin
+
 
 export default function EtudesScreen() {
   const navigation = useNavigation();
@@ -23,20 +25,25 @@ export default function EtudesScreen() {
   const [selectedStudies, setSelectedStudies] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // 🔁 Ecoute Firestore en temps réel
+  // Écoute Firestore en temps réel
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'etudes'), (snapshot) => {
-      const etudesFirestore = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setStudies(etudesFirestore);
-    }, (error) => {
-      console.error('Erreur récupération temps réel études Firestore :', error);
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, 'etudes'),
+      (snapshot) => {
+        const etudesFirestore = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setStudies(etudesFirestore);
+      },
+      (error) => {
+        console.error('Erreur récupération temps réel études Firestore :', error);
+      }
+    );
 
-    return () => unsubscribe(); // Nettoyage du listener
+    return () => unsubscribe();
   }, []);
+
 
   // Vérification si user est admin
   useEffect(() => {
@@ -49,6 +56,7 @@ export default function EtudesScreen() {
       setSelectedStudies([]);    // Clear sélection aussi
     }
   }, [auth.currentUser]); // à modifier si besoin (sinon ajouter listener auth)
+
 
   const toggleStudySelection = (id) => {
     setSelectedStudies((prev) =>
@@ -63,6 +71,7 @@ export default function EtudesScreen() {
     setSelectedStudies([]);
     setDeleteMode(false);
     // TODO: supprimer aussi dans Firestore si tu veux (ajoute ici la suppression)
+
   };
 
   return (
@@ -70,15 +79,19 @@ export default function EtudesScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
 
+
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
             <View style={styles.leftIcon}>
-              <Image source={require('../assets/snack-icon.png')} style={styles.icon} />
+              <Image
+                source={getImageForDomaine(item.domaine)}
+                style={styles.icon}
+              />
             </View>
 
             <View style={styles.content}>
               <Text style={styles.category}>
-                {item.domaine} • {item.duree}
+                {item.domaine} • {item.duree || '-'}
               </Text>
               <Text style={styles.title}>{item.titre}</Text>
               {item.deadline && (
@@ -110,6 +123,7 @@ export default function EtudesScreen() {
           </View>
         ))}
       </ScrollView>
+
 
       {/* --- AFFICHER SEULEMENT POUR ADMIN --- */}
       {isAdmin && (
@@ -143,6 +157,7 @@ export default function EtudesScreen() {
             </TouchableOpacity>
           </View>
         )
+
       )}
     </SafeAreaView>
   );
@@ -212,7 +227,8 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
   },
   redButton: {
@@ -220,7 +236,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
-    width: '100%',
+    flex: 1,
     alignItems: 'center',
   },
   greenButton: {
@@ -228,7 +244,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
-    width: '100%',
+    flex: 1,
     alignItems: 'center',
   },
   redButtonText: {
