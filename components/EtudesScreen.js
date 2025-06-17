@@ -64,14 +64,24 @@ export default function EtudesScreen() {
     );
   };
 
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selectedStudies.length === 0) return;
-    const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
-    setStudies(remaining);
+
+    // Supprimer dans Firestore
+    try {
+      await Promise.all(
+        selectedStudies.map(async (id) => {
+          await deleteDoc(doc(db, 'etudes', id));
+        })
+      );
+      Alert.alert('Succès', 'Études supprimées.');
+    } catch (error) {
+      console.error('Erreur suppression études:', error);
+      Alert.alert('Erreur', "Impossible de supprimer les études.");
+    }
+
     setSelectedStudies([]);
     setDeleteMode(false);
-    // TODO: supprimer aussi dans Firestore si tu veux (ajoute ici la suppression)
-
   };
 
   return (
@@ -79,12 +89,11 @@ export default function EtudesScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
 
-
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
             <View style={styles.leftIcon}>
               <Image
-                source={getImageForDomaine(item.domaine)}
+                source={require('../assets/snack-icon.png')}
                 style={styles.icon}
               />
             </View>
@@ -124,7 +133,6 @@ export default function EtudesScreen() {
         ))}
       </ScrollView>
 
-
       {/* --- AFFICHER SEULEMENT POUR ADMIN --- */}
       {isAdmin && (
         deleteMode ? (
@@ -157,7 +165,6 @@ export default function EtudesScreen() {
             </TouchableOpacity>
           </View>
         )
-
       )}
     </SafeAreaView>
   );
