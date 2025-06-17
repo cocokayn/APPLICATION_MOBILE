@@ -7,11 +7,25 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
+
+// Import statique des images domaine -> image
+const domaineImages = {
+  'IT & Digital': require('../assets/LOGOPRO.png'),
+  'Ingénierie et RSE': require('../assets/LOGOPRO.png'),
+  'Traduction Technique': require('../assets/LOGOPRO.png'),
+  'Ingénierie et systèmes': require('../assets/LOGOPRO.png'),
+  'Conseil et entrepenariat': require('../assets/LOGOPRO.png'),
+  'Digital & Culture': require('../assets/LOGOPRO.png'),
+  // ajoute ici d'autres domaines et leurs images correspondantes
+  // Par défaut, tu peux aussi avoir une image fallback
+  default: require('../assets/snack-icon.png'),
+};
 
 export default function EtudesScreen() {
   const navigation = useNavigation();
@@ -19,54 +33,95 @@ export default function EtudesScreen() {
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedStudies, setSelectedStudies] = useState([]);
 
-  // 🔁 Ecoute Firestore en temps réel
+  // Écoute Firestore en temps réel
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'etudes'), (snapshot) => {
-      const etudesFirestore = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setStudies(etudesFirestore);
-    }, (error) => {
-      console.error('Erreur récupération temps réel études Firestore :', error);
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, 'etudes'),
+      (snapshot) => {
+        const etudesFirestore = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setStudies(etudesFirestore);
+      },
+      (error) => {
+        console.error('Erreur récupération temps réel études Firestore :', error);
+      }
+    );
 
-    return () => unsubscribe(); // Nettoyage du listener
+    return () => unsubscribe();
   }, []);
 
+  // Ajouter ou retirer une étude sélectionnée
   const toggleStudySelection = (id) => {
     setSelectedStudies((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  const handleDeleteSelected = () => {
-    if (selectedStudies.length === 0) return;
-    const remaining = studies.filter((etude) => !selectedStudies.includes(etude.id));
-    setStudies(remaining);
-    setSelectedStudies([]);
-    setDeleteMode(false);
+  // Supprimer les études sélectionnées dans Firestore
+  const handleDeleteSelected = async () => {
+    if (selectedStudies.length === 0) {
+      Alert.alert('Aucune sélection', 'Sélectionnez au moins une étude à supprimer.');
+      return;
+    }
+
+    Alert.alert(
+      'Confirmer la suppression',
+      `Supprimer ${selectedStudies.length} étude(s) ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await Promise.all(
+                selectedStudies.map((id) => deleteDoc(doc(db, 'etudes', id)))
+              );
+              setSelectedStudies([]);
+              setDeleteMode(false);
+              Alert.alert('Succès', 'Étude(s) supprimée(s)');
+            } catch (error) {
+              console.error('Erreur suppression études:', error);
+              Alert.alert('Erreur', 'Impossible de supprimer les études.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Récupère l'image en fonction du domaine ou celle par défaut
+  const getImageForDomaine = (domaine) => {
+    if (!domaine) return domaineImages.default;
+    const key = domaine.toLowerCase();
+    return domaineImages[key] || domaineImages.default;
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
-              <TouchableOpacity
-                style={[styles.adminButton, { backgroundColor: '#6c757d' }]}
-                onPress={handleDeleteSelected} >
-              </TouchableOpacity>
+
+        {studies.length === 0 && (
+          <Text style={{ textAlign: 'center', marginTop: 30, color: '#666' }}>
+            Aucune étude disponible
+          </Text>
+        )}
 
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
             <View style={styles.leftIcon}>
-              <Image source={require('../assets/snack-icon.png')} style={styles.icon} />
+              <Image
+                source={getImageForDomaine(item.domaine)}
+                style={styles.icon}
+              />
             </View>
 
             <View style={styles.content}>
               <Text style={styles.category}>
-                {item.domaine} • {item.duree}
+                {item.domaine} • {item.duree || '-'}
               </Text>
               <Text style={styles.title}>{item.titre}</Text>
               {item.deadline && (
@@ -101,7 +156,10 @@ export default function EtudesScreen() {
 
       {deleteMode ? (
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.redButton} onPress={handleDeleteSelected}>
+          <TouchableOpacity
+            style={styles.redButton}
+            onPress={handleDeleteSelected}
+          >
             <Text style={styles.redButtonText}>Confirmer suppression</Text>
           </TouchableOpacity>
 
@@ -124,7 +182,10 @@ export default function EtudesScreen() {
             <Text style={styles.greenButtonText}>Ajouter une étude</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.redButton} onPress={() => setDeleteMode(true)}>
+          <TouchableOpacity
+            style={styles.redButton}
+            onPress={() => setDeleteMode(true)}
+          >
             <Text style={styles.redButtonText}>Supprimer une étude</Text>
           </TouchableOpacity>
         </View>
@@ -135,23 +196,14 @@ export default function EtudesScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#376787' },
   container: { padding: 20, paddingBottom: 120 },
   sectionTitle: {
-  fontSize: 20,
-  fontWeight: 'bold',
-  color: '#2A2A2A',
-  marginBottom: 15,
-  textAlign: 'center',
-},
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
   card: {
     flexDirection: 'row',
     backgroundColor: '#f2f2f2',
@@ -206,7 +258,8 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
   },
   redButton: {
@@ -214,7 +267,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
-    width: '100%',
+    flex: 1,
     alignItems: 'center',
   },
   greenButton: {
@@ -222,7 +275,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
-    width: '100%',
+    flex: 1,
     alignItems: 'center',
   },
   redButtonText: {
