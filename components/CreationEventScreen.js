@@ -1,8 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { db } from '../utils/firebaseConfig';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
-export default function CreationEventScreen() {
+const { width, height } = Dimensions.get('window');
+
+export default function AjouterEvenementScreen() {
   const navigation = useNavigation();
 
   const [nom, setNom] = useState('');
@@ -12,101 +27,209 @@ export default function CreationEventScreen() {
   const [places, setPlaces] = useState('');
   const [lieu, setLieu] = useState('');
 
-  const handleCreate = () => {
-    // Logique de création d'événement
-    console.log({ nom, domaine, date, description, places, lieu });
-    // navigation.navigate('...'); // vers la liste ou confirmation
+  const scrollViewRef = useRef(null);
+  const nomRef = useRef(null);
+  const dateRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const placesRef = useRef(null);
+  const lieuRef = useRef(null);
+
+  const scrollToInput = (ref) => {
+    setTimeout(() => {
+      ref.current?.measureLayout(
+        scrollViewRef.current,
+        (x, y) => {
+          scrollViewRef.current.scrollTo({ y: y - 80, animated: true });
+        }
+      );
+    }, 100);
+  };
+
+  const handleCreate = async () => {
+    if (!nom || !domaine || !date || !description || !places || !lieu) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
+      return;
+    }
+
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      Alert.alert('Erreur', "La date n'est pas valide (format attendu : YYYY-MM-DD).");
+      return;
+    }
+
+    const placesInt = parseInt(places, 10);
+    if (isNaN(placesInt) || placesInt < 1) {
+      Alert.alert('Erreur', 'Le nombre de places doit être un entier ≥ 1.');
+      return;
+    }
+
+    try {
+      const newEvent = {
+        nom,
+        domaine,
+        date: Timestamp.fromDate(dateObj),
+        description,
+        places: placesInt,
+        lieu,
+        date_creation: Timestamp.now(),
+      };
+
+      await addDoc(collection(db, 'evenements'), newEvent);
+      Alert.alert('Succès', "L'événement a été ajouté !");
+
+      // Navigation vers EvenementsScreen en passant le nom créé
+      navigation.navigate('EvenementsScreen', { createdEventName: nom });
+    } catch (error) {
+      console.error('Erreur ajout événement:', error);
+      Alert.alert('Erreur', "Impossible d'ajouter l'événement. Veuillez réessayer.");
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Text style={styles.backButtonText}>← Retour</Text>
-      </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: '#fff' }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+    >
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>← Retour</Text>
+        </Pressable>
 
-      <Text style={styles.title}>Créer un événement</Text>
+        <Text style={styles.title}>Créer un événement</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nom de l’événement"
-        value={nom}
-        onChangeText={setNom}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Domaine"
-        value={domaine}
-        onChangeText={setDomaine}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Date de l’événement"
-        value={date}
-        onChangeText={setDate}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Places disponibles"
-        keyboardType="numeric"
-        value={places}
-        onChangeText={setPlaces}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Lieu"
-        value={lieu}
-        onChangeText={setLieu}
-      />
+        <TextInput
+          ref={nomRef}
+          placeholder="Nom de l'événement"
+          value={nom}
+          onChangeText={setNom}
+          style={styles.input}
+          onFocus={() => scrollToInput(nomRef)}
+          returnKeyType="next"
+          onSubmitEditing={() => dateRef.current.focus()}
+          blurOnSubmit={false}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleCreate}>
-        <Text style={styles.buttonText}>Créer l’événement</Text>
-      </TouchableOpacity>
-    </View>
+        <TextInput
+          placeholder="Domaine"
+          value={domaine}
+          onChangeText={setDomaine}
+          style={styles.input}
+          onFocus={() => scrollToInput(lieuRef)}
+          returnKeyType="next"
+        />
+
+        <TextInput
+          ref={dateRef}
+          placeholder="Date de l’événement (YYYY-MM-DD)"
+          value={date}
+          onChangeText={setDate}
+          style={styles.input}
+          onFocus={() => scrollToInput(dateRef)}
+          returnKeyType="next"
+          onSubmitEditing={() => descriptionRef.current.focus()}
+          blurOnSubmit={false}
+        />
+
+        <TextInput
+          ref={descriptionRef}
+          placeholder="Description"
+          value={description}
+          onChangeText={setDescription}
+          style={styles.input}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+          onFocus={() => scrollToInput(descriptionRef)}
+          returnKeyType="next"
+          onSubmitEditing={() => placesRef.current.focus()}
+          blurOnSubmit={false}
+        />
+
+        <TextInput
+          ref={placesRef}
+          placeholder="Places disponibles (min 1)"
+          keyboardType="numeric"
+          value={places}
+          onChangeText={setPlaces}
+          style={styles.input}
+          onFocus={() => scrollToInput(placesRef)}
+          returnKeyType="next"
+          onSubmitEditing={() => lieuRef.current.focus()}
+          blurOnSubmit={false}
+        />
+
+        <TextInput
+          ref={lieuRef}
+          placeholder="Lieu"
+          value={lieu}
+          onChangeText={setLieu}
+          style={styles.input}
+          onFocus={() => scrollToInput(lieuRef)}
+          returnKeyType="done"
+          onSubmitEditing={handleCreate}
+        />
+
+        <Pressable style={styles.button} onPress={handleCreate}>
+          <Text style={styles.buttonText}>Créer l’événement</Text>
+        </Pressable>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    paddingHorizontal: '5%',
+    paddingTop: height * 0.15,
+    paddingBottom: height * 0.02,
+    flexGrow: 1,
     backgroundColor: '#fff',
   },
   backButton: {
-    marginBottom: 10,
+    position: 'absolute',
+    top: height * 0.08,
+    left: '5%',
+    zIndex: 10,
+    padding: 8,
   },
   backButtonText: {
+    fontSize: width * 0.045,
     color: '#376787',
-    fontSize: 16,
-    fontWeight:'bold'
+    fontWeight: 'bold',
   },
   title: {
-    fontSize: 22,
+    fontSize: width * 0.055,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: height * 0.025,
+    textAlign: 'center',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 15,
+    borderColor: '#ccc',
+    paddingVertical: height * 0.015,
+    paddingHorizontal: '4%',
+    marginBottom: height * 0.015,
+    borderRadius: 8,
+    width: '100%',
   },
   button: {
-    backgroundColor: '#2D6A91',
-    padding: 14,
+    backgroundColor: '#376787',
+    paddingVertical: height * 0.02,
+    paddingHorizontal: '5%',
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: height * 0.02,
+    width: '100%',
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: width * 0.045,
   },
 });

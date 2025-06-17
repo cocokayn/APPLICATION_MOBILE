@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Dimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../utils/firebaseConfig'; // adapte le chemin selon ton projet
 
 export default function ModifierEtudeScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { study } = route.params;
+  const { study } = route.params || {};
 
   const [titre, setTitre] = useState(study?.titre || '');
   const [domaine, setDomaine] = useState(study?.domaine || '');
@@ -21,34 +23,43 @@ export default function ModifierEtudeScreen() {
     }
 
     try {
-      const response = await fetch(`https://<TON_URL_CLOUD_FUNCTION>/updateEtude?id=${study.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          titre,
-          domaine,
-          deadline,
-          description,
-          competences,
-          jeh: Number(jeh)
-        })
+      const etudeRef = doc(db, 'etudes', study.id);
+
+      await updateDoc(etudeRef, {
+        titre,
+        domaine,
+        deadline,
+        description,
+        competences,
+        jeh: Number(jeh),
       });
 
-      if (response.ok) {
-        Alert.alert('Succès', 'Étude mise à jour !');
-        navigation.goBack();
-      } else {
-        Alert.alert('Erreur', 'Échec de la mise à jour.');
-      }
+      Alert.alert('Succès', 'Étude mise à jour !');
+      navigation.goBack();
     } catch (err) {
       console.error(err);
-      Alert.alert('Erreur', 'Une erreur s’est produite.');
+      Alert.alert('Erreur', 'Une erreur s’est produite lors de la mise à jour.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!study || !study.id) {
+      Alert.alert('Rien à supprimer');
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'etudes', study.id));
+      Alert.alert('Supprimé', 'Étude supprimée.');
+      navigation.goBack();
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la suppression.');
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Bouton retour */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Text style={styles.backButtonText}>← Retour</Text>
       </TouchableOpacity>
@@ -66,6 +77,10 @@ export default function ModifierEtudeScreen() {
         <TouchableOpacity style={styles.button} onPress={handleUpdate}>
           <Text style={styles.buttonText}>Enregistrer les modifications</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={handleDelete}>
+          <Text style={styles.buttonText}>Supprimer cette étude</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -81,7 +96,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: height * 0.06, // ≈6% de la hauteur de l'écran
+    top: height * 0.06,
     left: '5%',
     zIndex: 10,
   },
@@ -91,7 +106,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   formWrapper: {
-    marginTop: height * 0.12, // Décale le contenu principal pour laisser de la place au bouton retour
+    marginTop: height * 0.12,
   },
   title: {
     fontSize: 22,
@@ -112,6 +127,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
+  },
+  deleteButton: {
+    backgroundColor: 'red',
   },
   buttonText: {
     color: '#fff',
