@@ -49,6 +49,7 @@ export default function NewsList() {
   });
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedArticleUrl, setSelectedArticleUrl] = useState(null);
+  const [modalTextArticle, setModalTextArticle] = useState(null);
   const [isAdmin, setIsAdmin] = useState(true);
 
   const [modalAjoutVisible, setModalAjoutVisible] = useState(false);
@@ -149,8 +150,13 @@ export default function NewsList() {
           data={data}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
-            <TouchableOpacity onPress={() => item.url && setSelectedArticleUrl(item.url)}>
-             <View style={[styles.articleBubble, !isAllCategory && styles.articleBubbleVertical]}>
+            <TouchableOpacity
+              onPress={() => {
+                if (item.url) setSelectedArticleUrl(item.url);
+                else setModalTextArticle(item);
+              }}
+            >
+              <View style={[styles.articleBubble, !isAllCategory && styles.articleBubbleVertical]}>
                 {item.urlToImage && <Image source={{ uri: item.urlToImage }} style={styles.image} />}
                 <Text style={styles.titre}>{item.title}</Text>
                 <Text>{truncateText(item.description)}</Text>
@@ -173,9 +179,6 @@ export default function NewsList() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-  <Text style={styles.headerTitle}>📰 Articles - EPF Projets</Text>
-</View>
         <ScrollView horizontal contentContainerStyle={styles.filterContainer} showsHorizontalScrollIndicator={false}>
           {categories.map((cat) => (
             <TouchableOpacity
@@ -268,95 +271,120 @@ export default function NewsList() {
             </TouchableOpacity>
           </ScrollView>
         </Modal>
+
+        {/* Modal texte pour article JE sans URL */}
+        <Modal visible={!!modalTextArticle} animationType="slide" onRequestClose={() => setModalTextArticle(null)}>
+          <ScrollView contentContainerStyle={{ padding: 20, flex: 1, backgroundColor: '#fff' }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 24, marginBottom: 10 }}>{modalTextArticle?.title}</Text>
+            {modalTextArticle?.urlToImage && (
+              <Image
+                source={{ uri: modalTextArticle.urlToImage }}
+                style={{ width: '100%', height: 200, marginBottom: 10, borderRadius: 10 }}
+              />
+            )}
+            <Text style={{ fontSize: 16 }}>{modalTextArticle?.description}</Text>
+            <TouchableOpacity
+              onPress={() => setModalTextArticle(null)}
+              style={[styles.closeButtonBottom, { position: 'relative', bottom: 0, marginTop: 20 }]}
+            >
+              <Text style={styles.modalClose}>Fermer</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#f9f9f9' },
   scrollContent: { paddingBottom: 20 },
   scrollContainer: { paddingHorizontal: 16 },
   verticalListContainer: { paddingHorizontal: 0 },
   articleBubble: {
     width: width * 0.8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'white',
     borderRadius: 20,
     padding: 16,
     marginHorizontal: 10,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  articleBubbleVertical: { width: '95%', marginHorizontal: 'auto' },
-  titre: { fontWeight: 'bold', fontSize: 16, marginBottom: 8 },
-  image: { width: '100%', height: 200, borderRadius: 10, marginBottom: 8 },
-  sectionTitleContainer: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginVertical: 10 },
-  sectionTitle: { fontWeight: 'bold', fontSize: 20, marginRight: 10 },
-  titleLine: { flex: 1, height: 2, backgroundColor: '#000' },
-  filterContainer: { paddingHorizontal: 16, marginBottom: 10 },
-  filterButton: { paddingVertical: 8, paddingHorizontal: 16, backgroundColor: '#e0e0e0', borderRadius: 20, marginRight: 10 },
-  selectedFilter: { backgroundColor: '#376787' },
-  filterText: { fontSize: 14, color: '#333' },
-  selectedFilterText: { color: 'white', fontWeight: 'bold' },
+  articleBubbleVertical: {
+    width: '100%',
+    marginHorizontal: 0,
+  },
+  image: { width: '100%', height: 150, borderRadius: 20, marginBottom: 10 },
+  titre: { fontWeight: 'bold', fontSize: 18, marginBottom: 6, color: '#222' },
+  sectionTitleContainer: { marginVertical: 10, paddingHorizontal: 16 },
+  sectionTitle: { fontSize: 24, fontWeight: 'bold', color: '#444' },
+  titleLine: {
+    width: 50,
+    height: 4,
+    backgroundColor: '#376787',
+    marginTop: 6,
+    borderRadius: 3,
+  },
+  filterContainer: { paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row' },
+  filterButton: {
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    marginRight: 10,
+  },
+  selectedFilter: {
+    backgroundColor: '#376787',
+    borderColor: '#376787',
+  },
+  filterText: { color: '#555' },
+  selectedFilterText: { color: '#fff' },
   closeButtonBottom: {
-    position: 'absolute', bottom: 30, alignSelf: 'center', backgroundColor: '#376787', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 30,
+    backgroundColor: '#376787',
+    padding: 15,
+    marginHorizontal: 16,
+    borderRadius: 30,
+    alignItems: 'center',
   },
   modalClose: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   addButton: {
     backgroundColor: '#376787',
-    paddingVertical: 12,
+    borderRadius: 30,
     marginHorizontal: 16,
-    borderRadius: 10,
+    marginBottom: 10,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginBottom: 20,
   },
-  selectedFilter: { backgroundColor: '#376787' },
-  filterText: { fontSize: 14, color: '#333' },
-  selectedFilterText: { color: 'white', fontWeight: 'bold' },
-  closeButtonBottom: {
-    position: 'absolute', bottom: 30, alignSelf: 'center', backgroundColor: '#376787', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 30,
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
   },
-  modalClose: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-  addButton: {
-    backgroundColor: '#008000',
-    paddingVertical: 12,
-    marginHorizontal: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  addButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   input: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 15,
     padding: 12,
     fontSize: 16,
+    backgroundColor: '#fff',
   },
   imagePicker: {
-    backgroundColor: '#376787',
-    paddingVertical: 12,
-    borderRadius: 10,
+    backgroundColor: '#007AFF',
+    borderRadius: 15,
+    padding: 12,
     alignItems: 'center',
   },
   deleteButton: {
     marginTop: 10,
-    backgroundColor: '#d9534f',
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: '#ff3b30',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     alignSelf: 'flex-start',
   },
   deleteText: { color: 'white', fontWeight: 'bold' },
-  header: {
-  alignItems: 'center',
-  marginVertical: 20,
-},
-headerTitle: {
-  fontSize: 20,
-  fontWeight: 'bold',
-  color: '#2A2A2A',
-},
 });
