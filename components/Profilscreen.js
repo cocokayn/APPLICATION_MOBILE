@@ -79,7 +79,7 @@ export default function ProfileScreen() {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('InfosPerso')}>
-            <Text style={styles.buttonText}>Voir ou modifier mes infos personnelles</Text>
+            <Text style={styles.buttonText}>Modifier mes informations personnelles</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Historique')}>
             <Text style={styles.buttonText}>Voir historique</Text>
@@ -189,6 +189,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   logoutButton: {
     marginTop: 20,
