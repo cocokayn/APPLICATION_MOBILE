@@ -12,6 +12,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { db } from '../utils/firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
@@ -19,13 +20,20 @@ import { collection, addDoc, Timestamp } from 'firebase/firestore';
 const { width, height } = Dimensions.get('window');
 
 const domainImages = {
-  default: require('../assets/snack-icon.png'), // Image par défaut
+  'IT & Digital': require('../assets/IT_Digital.jpg'),
+  'Ingénierie et RSE': require('../assets/Ingénierie-RSE.jpg'),
+  'Traduction Technique': require('../assets/traduction-techniques.jpg'),
+  'Ingénierie et systèmes': require('../assets/Ing-Sys.jpg'),
+  'Conseil et entrepenariat': require('../assets/entrepreneuriat.jpg'),
+  'Digital & Culture': require('../assets/Digital-culture.png'),
+  default: require('../assets/snack-icon.png'),
 };
 
 export default function AjouterEtudeScreen() {
   const navigation = useNavigation();
 
   const [titre, setTitre] = useState('');
+  const [domaine, setDomaine] = useState('');
   const [dateLimite, setDateLimite] = useState('');
   const [description, setDescription] = useState('');
   const [competences, setCompetences] = useState('');
@@ -37,9 +45,8 @@ export default function AjouterEtudeScreen() {
   const descriptionRef = useRef(null);
   const jehRef = useRef(null);
 
-  // Toujours retourner l'image par défaut
   const getDomainImage = () => {
-    return domainImages.default;
+    return domainImages[domaine] || domainImages.default;
   };
 
   const scrollToInput = (ref) => {
@@ -54,7 +61,7 @@ export default function AjouterEtudeScreen() {
   };
 
   const handleCreate = async () => {
-    if (!titre || !dateLimite || !description || !competences || !jeh) {
+    if (!titre || !domaine || !dateLimite || !description || !competences || !jeh) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
       return;
     }
@@ -81,7 +88,7 @@ export default function AjouterEtudeScreen() {
     try {
       const newEtude = {
         titre,
-        domaine: '', // Plus de domaine choisi, on laisse vide ou fixe
+        domaine,
         deadline: dateLimite,
         description,
         competences,
@@ -126,6 +133,19 @@ export default function AjouterEtudeScreen() {
         <View style={styles.imagePicker}>
           <Image source={getDomainImage()} style={styles.imagePreview} />
         </View>
+
+        <Picker
+          selectedValue={domaine}
+          onValueChange={(itemValue) => setDomaine(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Sélectionner un domaine..." value="" />
+          {Object.keys(domainImages)
+            .filter((key) => key !== 'default')
+            .map((key) => (
+              <Picker.Item key={key} label={key} value={key} />
+            ))}
+        </Picker>
 
         <TextInput
           ref={titreRef}
@@ -231,6 +251,14 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.15,
     borderWidth: 1,
     borderColor: '#ccc',
+  },
+  picker: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: height * 0.015,
+    borderRadius: 8,
+    width: '100%',
+    backgroundColor: '#f9f9f9',
   },
   input: {
     borderWidth: 1,

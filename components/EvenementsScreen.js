@@ -48,7 +48,7 @@ export default function EvenementsScreen() {
   const confirmInscription = () => {
     setConfirmVisible(false);
     setSuccessVisible(true);
-    // Tu peux ici ajouter un appel Firestore pour enregistrer l'inscription
+    // Ajouter inscription dans Firestore si besoin
   };
 
   const handleAdd = () => navigation.navigate('CreationEvent');
@@ -71,7 +71,6 @@ export default function EvenementsScreen() {
   setPickerModalVisible(true);
 };
 
-
   const handleEventSelect = async (event) => {
     setPickerModalVisible(false);
     if (actionType === 'modifier') {
@@ -93,9 +92,7 @@ export default function EvenementsScreen() {
 
         {events.map((event) => (
           <View key={event.id} style={styles.card}>
-            <View style={styles.header}>
-              <Text style={styles.eventTitle}>{event.titre}</Text>
-            </View>
+            <Text style={styles.eventTitle}>{event.nom}</Text>
             <Text style={styles.date}>
               <Ionicons name="calendar-outline" /> {event.date ? event.date.toDate().toLocaleString() : 'Date inconnue'}
             </Text>
@@ -127,7 +124,7 @@ export default function EvenementsScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalText}>
-              Confirmer l’inscription à "{selectedEvent?.titre}" ?
+              Confirmer l’inscription à "{selectedEvent?.nom}" ?
             </Text>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalButton} onPress={confirmInscription}>
@@ -165,7 +162,7 @@ export default function EvenementsScreen() {
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => handleEventSelect(item)} style={styles.eventItem}>
-                  <Text>{item.titre}</Text>
+                  <Text>{item.nom}</Text>
                 </TouchableOpacity>
               )}
             />
@@ -183,26 +180,8 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: { padding: 20 },
   title: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 15 },
-  card: {
-    backgroundColor: '#f2f2f2',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-  },
-  header: {
-    backgroundColor: '#DCE9F1',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    marginBottom: 8,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1c3d5a',
-    textAlign: 'center',
-  },
+  card: { backgroundColor: '#f2f2f2', borderRadius: 12, padding: 15, marginBottom: 15 },
+  eventTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 5 },
   date: { fontSize: 14, color: '#333', marginBottom: 2 },
   lieu: { fontSize: 14, color: '#333', marginBottom: 5 },
   description: { fontSize: 14, color: '#555', marginBottom: 10 },
@@ -225,13 +204,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalBox: {
-    backgroundColor: '#fff',
-    padding: 25,
-    borderRadius: 12,
-    width: '85%',
-    alignItems: 'center',
-  },
+  modalBox: { backgroundColor: '#fff', padding: 25, borderRadius: 12, width: '85%', alignItems: 'center' },
   modalText: { fontSize: 16, marginBottom: 20, textAlign: 'center' },
   modalActions: { flexDirection: 'row', gap: 15 },
   modalButton: {
