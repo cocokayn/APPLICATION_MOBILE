@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -65,90 +66,113 @@ export default function ModifierEventScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Modifier l’événement</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nom"
-        value={nom}
-        onChangeText={setNom}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Domaine"
-        value={domaine}
-        onChangeText={setDomaine}
-      />
-
-      <TextInput
-        style={[styles.input, { height: 80 }]}
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre de places"
-        value={places}
-        onChangeText={setPlaces}
-        keyboardType="numeric"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Lieu"
-        value={lieu}
-        onChangeText={setLieu}
-      />
-
-      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
-        <Text style={styles.dateButtonText}>
-          {date.toLocaleDateString()}
-        </Text>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Text style={styles.backButtonText}>← Retour</Text>
       </TouchableOpacity>
 
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={onChangeDate}
+      <View style={styles.formWrapper}>
+        <Text style={styles.title}>Modifier un événement</Text>
+
+        <TextInput placeholder="Nom" value={nom} onChangeText={setNom} style={styles.input} />
+        <TextInput placeholder="Domaine" value={domaine} onChangeText={setDomaine} style={styles.input} />
+        <TextInput
+          placeholder="Description"
+          value={description}
+          onChangeText={setDescription}
+          style={[styles.input, { height: 80 }]}
+          multiline
         />
-      )}
+        <TextInput
+          placeholder="Nombre de places"
+          value={places}
+          onChangeText={setPlaces}
+          keyboardType="numeric"
+          style={styles.input}
+        />
+        <TextInput placeholder="Lieu" value={lieu} onChangeText={setLieu} style={styles.input} />
 
-      <TouchableOpacity style={styles.button} onPress={handleUpdate}>
-        <Text style={styles.buttonText}>Enregistrer les modifications</Text>
-      </TouchableOpacity>
+        <Text style={styles.label}>Date :</Text>
+
+        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+          <Text style={{ color: '#000' }}>{date.toLocaleDateString()}</Text>
+        </TouchableOpacity>
+
+        {showDatePicker && (
+          <View style={styles.datePickerWrapper}>
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="default"
+              onChange={onChangeDate}
+              style={{ alignSelf: 'center' }}
+            />
+          </View>
+        )}
+
+        <TouchableOpacity style={styles.button} onPress={handleUpdate}>
+          <Text style={styles.buttonText}>Enregistrer les modifications</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
+const { height } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: '5%',
+  },
+  backButton: {
+    position: 'absolute',
+    top: height * 0.06,
+    left: '5%',
+    zIndex: 10,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#376787',
+    fontWeight: 'bold',
+  },
+  formWrapper: {
+    marginTop: height * 0.12,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
     marginBottom: 12,
+    padding: 10,
+    borderRadius: 5,
+    justifyContent: 'center',
   },
-  dateButton: {
-    backgroundColor: '#376787',
-    padding: 12,
-    borderRadius: 8,
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 6,
+    color: '#333',
+  },
+  datePickerWrapper: {
     alignItems: 'center',
     marginBottom: 20,
   },
-  dateButtonText: { color: '#fff', fontWeight: 'bold' },
   button: {
     backgroundColor: '#008000',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginTop: 10,
   },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
