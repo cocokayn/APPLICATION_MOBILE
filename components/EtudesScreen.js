@@ -160,9 +160,19 @@ export default function EtudesScreen() {
               <Text style={styles.greenButtonText}>Ajouter une étude</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.redButton} onPress={() => setDeleteMode(true)}>
-              <Text style={styles.redButtonText}>Supprimer une étude</Text>
-            </TouchableOpacity>
+            <TouchableOpacity
+  style={styles.redButton}
+  onPress={() => {
+    if (studies.length === 0) {
+      Alert.alert('Aucune étude', 'Il n’y a actuellement aucune étude à supprimer.');
+    } else {
+      setDeleteMode(true);
+    }
+  }}
+>
+  <Text style={styles.redButtonText}>Supprimer une étude</Text>
+</TouchableOpacity>
+
           </View>
         )
       )}

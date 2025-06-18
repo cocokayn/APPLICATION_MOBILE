@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "EPF-Projets JE'Connect",
+    "name": "JE'Connect",
     "slug": "epf-projets-jeconnect",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo-512.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/avatar.png",
