@@ -51,12 +51,12 @@ export default function EvenementsScreen() {
     Animated.sequence([
       Animated.timing(animationRefs.current[eventId], {
         toValue: 1,
-        duration: 100,
+        duration: 200,  // Augmentation durée apparition
         useNativeDriver: false,
       }),
       Animated.timing(animationRefs.current[eventId], {
         toValue: 0,
-        duration: 300,
+        duration: 600,  // Augmentation durée disparition
         useNativeDriver: false,
       })
     ]).start();
