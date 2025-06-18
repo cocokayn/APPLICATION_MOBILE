@@ -26,12 +26,12 @@ export default function ContactScreen() {
       <View style={styles.contactItem}>
         <Text style={styles.label}>Email :</Text>
         <TouchableOpacity onPress={handleEmailPress}>
-          <Text style={styles.link}>iris.berthelot@epfprojets.com</Text>
+          <Text style={styles.link}>info@epfprojets.com</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.contactItem}>
-        <Text style={styles.label}>Responsable :</Text>
+        <Text style={styles.label}>Présidente :</Text>
         <Text style={styles.value}>Iris Berthelot</Text>
       </View>
 

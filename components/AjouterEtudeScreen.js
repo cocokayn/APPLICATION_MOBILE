@@ -21,11 +21,11 @@ const { width, height } = Dimensions.get('window');
 
 const domainImages = {
   'IT & Digital': require('../assets/IT_Digital.jpg'),
-  'Ingénierie et RSE': require('../assets/Ingénierie-RSE.jpg'),
+  'Ingénierie & RSE': require('../assets/Ingénierie-RSE.jpg'),
   'Traduction Technique': require('../assets/traduction-techniques.jpg'),
-  'Ingénierie et systèmes': require('../assets/Ing-Sys.jpg'),
-  'Conseil et entrepenariat': require('../assets/entrepreneuriat.jpg'),
-  'Digital & Culture': require('../assets/Digital-culture.png'),
+  'Ingénierie & systèmes': require('../assets/Ing-Sys.jpg'),
+  'Conseil & entrepenariat': require('../assets/entrepreneuriat.jpg'),
+  'Digital au service de la Culture': require('../assets/Digital-culture.png'),
   default: require('../assets/snack-icon.png'),
 };
 

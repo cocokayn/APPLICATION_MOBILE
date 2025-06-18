@@ -4,7 +4,7 @@ import { TabView } from 'react-native-tab-view';
 import { Ionicons } from '@expo/vector-icons';
 
 // Tes écrans
-import AccueilScreen from './Newslist';
+import ArticlesScreen from './Newslist';
 import EtudesScreen from './EtudesScreen';
 import EvenementsScreen from './EvenementsScreen';
 import ProfilScreen from './Profilscreen';
@@ -12,20 +12,20 @@ import ProfilScreen from './Profilscreen';
 export default function SwipeTabs({ navigation }) {
   const layout = useWindowDimensions();
 
-  // ordre changé ici : Etudes, Evenements, Accueil, Profil
+  // ordre changé ici : Etudes, Evenements, Articles, Profil
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
     { key: 'etudes', title: 'Études', icon: 'school-outline' },
     { key: 'evenements', title: 'Événements', icon: 'calendar-outline' },
-    { key: 'accueil', title: 'Accueil', icon: 'newspaper-outline' },
+    { key: 'articles', title: 'Articles', icon: 'newspaper-outline' },
     { key: 'profil', title: 'Profil', icon: 'person-outline' },
   ]);
 
   // renderScene avec props navigation passées aux écrans
   const renderScene = ({ route }) => {
     switch (route.key) {
-      case 'accueil':
-        return <AccueilScreen navigation={navigation} />;
+      case 'articles':
+        return <ArticlesScreen navigation={navigation} />;
       case 'etudes':
         return <EtudesScreen navigation={navigation} />;
       case 'evenements':
