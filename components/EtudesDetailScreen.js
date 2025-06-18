@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,12 @@ import {
   Modal,
   FlatList,
   Dimensions,
-  ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../utils/firebaseConfig';
+import { adminEmails } from '../utils/adminConfig';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,24 +21,80 @@ export default function EtudesDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const study = route.params?.study;
-  const userRole = 'admin';
 
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [candidats, setCandidats] = useState([]);
 
-  const candidats = [
-    { id: '1', nom: 'Alexis Bidault' },
-    { id: '2', nom: 'Julie Martin' },
-    { id: '3', nom: 'Thomas Dupuis' },
-  ];
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        setIsAdmin(adminEmails.includes(user.email));
+        if (study?.id) {
+          fetchCandidats();
+        }
+      }
+    });
+    return unsubscribe;
+  }, [study?.id]); // Relance quand study.id change
+
+  const fetchCandidats = async () => {
+    if (!study?.id) return;
+    try {
+      const candidatsRef = collection(db, 'etudes', study.id, 'candidats');
+      const snapshot = await getDocs(candidatsRef);
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCandidats(list);
+    } catch (error) {
+      console.log('Erreur lors du chargement des candidats :', error);
+    }
+  };
 
   const handlePostuler = () => {
     setConfirmModalVisible(true);
   };
 
-  const confirmPostulation = () => {
+  const confirmPostulation = async () => {
     setConfirmModalVisible(false);
-    setSuccessModalVisible(true);
+    if (!currentUser || !study?.id) return;
+
+    try {
+      // Récupération info utilisateur
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        alert('Impossible de récupérer tes informations utilisateur.');
+        return;
+      }
+      const userInfo = userDocSnap.data();
+
+      // Vérifier si déjà candidat
+      const candidatDocRef = doc(db, 'etudes', study.id, 'candidats', currentUser.uid);
+      const candidatDocSnap = await getDoc(candidatDocRef);
+
+      if (candidatDocSnap.exists()) {
+        alert('Tu as déjà postulé à cette étude.');
+        return;
+      }
+
+      // Ajout candidature
+      const candidat = {
+        id: currentUser.uid,
+        nom: userInfo.nom,
+        prenom: userInfo.prenom,
+      };
+
+      await setDoc(candidatDocRef, candidat);
+      await fetchCandidats();
+      setSuccessModalVisible(true);
+    } catch (error) {
+      console.log('Erreur lors de la postulation :', error);
+      alert('Une erreur est survenue lors de la postulation.');
+    }
   };
 
   const handleCandidatPress = (candidat) => {
@@ -56,61 +115,59 @@ export default function EtudesDetailScreen() {
         <Text style={styles.backText}>← Retour</Text>
       </TouchableOpacity>
 
-      <View>
-  <View style={styles.titleWrapper}>
-    <Text style={styles.title}>Détail de l'étude</Text>
-  </View>
+      <View style={styles.titleWrapper}>
+        <Text style={styles.title}>Détail de l'étude</Text>
+      </View>
 
-  <View style={styles.card}>
-    <Text style={styles.studyTitle}>{study.titre}</Text>
-    <Text style={styles.subTitle}>{study.domaine} • {study.duree}</Text>
-    {study.deadline && (
-      <Text style={styles.deadline}>Date limite : {study.deadline}</Text>
-    )}
+      <View style={styles.card}>
+        <Text style={styles.studyTitle}>{study.titre}</Text>
+        <Text style={styles.subTitle}>{study.domaine} • {study.duree}</Text>
+        {study.deadline && (
+          <Text style={styles.deadline}>Date limite : {study.deadline}</Text>
+        )}
 
-    <Text style={styles.sectionTitle}>Description</Text>
-    <Text style={styles.text}>{study.description}</Text>
+        <Text style={styles.sectionTitle}>Description</Text>
+        <Text style={styles.text}>{study.description}</Text>
 
-    <Text style={styles.sectionTitle}>Compétences requises</Text>
-    <Text style={styles.text}>{study.competences}</Text>
+        <Text style={styles.sectionTitle}>Compétences requises</Text>
+        <Text style={styles.text}>{study.competences}</Text>
 
-    <Text style={styles.sectionTitle}>Nombre de JEH</Text>
-    <Text style={styles.text}>{study.jeh}</Text>
+        <Text style={styles.sectionTitle}>Nombre de JEH</Text>
+        <Text style={styles.text}>{study.jeh}</Text>
 
-    {userRole === 'admin' && (
-      <>
-        <Text style={styles.sectionTitle}>Voir les candidats :</Text>
-        <View style={styles.scrollCandidates}>
-          <FlatList
-            data={candidats}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.candidatItem}
-                onPress={() => handleCandidatPress(item)}
-              >
-                <Text style={styles.candidatName}>{item.nom}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </>
-    )}
+        {isAdmin && (
+          <>
+            <Text style={styles.sectionTitle}>Voir les candidats :</Text>
+            <View style={styles.scrollCandidates}>
+              <FlatList
+                data={candidats}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.candidatItem}
+                    onPress={() => handleCandidatPress(item)}
+                  >
+                    <Text style={styles.candidatName}>{item.prenom} {item.nom}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </>
+        )}
 
-    {userRole === 'admin' && (
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#e67e22' }]}
-        onPress={() => navigation.navigate('ModifierEtude', { study })}
-      >
-        <Text style={styles.buttonText}>Modifier cette étude</Text>
-      </TouchableOpacity>
-    )}
+        {isAdmin && (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#e67e22' }]}
+            onPress={() => navigation.navigate('ModifierEtude', { study })}
+          >
+            <Text style={styles.buttonText}>Modifier cette étude</Text>
+          </TouchableOpacity>
+        )}
 
-    <TouchableOpacity style={styles.button} onPress={handlePostuler}>
-      <Text style={styles.buttonText}>Postuler à cette étude</Text>
-    </TouchableOpacity>
-  </View>
-</View>
+        <TouchableOpacity style={styles.button} onPress={handlePostuler}>
+          <Text style={styles.buttonText}>Postuler à cette étude</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Modals */}
       <Modal transparent visible={confirmModalVisible} animationType="fade">
@@ -148,14 +205,11 @@ export default function EtudesDetailScreen() {
 
 const styles = StyleSheet.create({
   scrollCandidates: {
-  maxHeight: 150,
-},
+    maxHeight: 150,
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  scrollContent: {
-    paddingBottom: 40,
   },
   backButton: {
     position: 'absolute',

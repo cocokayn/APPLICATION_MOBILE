@@ -27,11 +27,15 @@ const domaineImages = {
   default: require('../assets/snack-icon.png'),
 };
 
+import { auth } from '../utils/firebaseConfig'; // Import de l'auth Firebase
+import { adminEmails } from '../utils/adminConfig'; // Liste des emails admin
+
 export default function EtudesScreen() {
   const navigation = useNavigation();
   const [studies, setStudies] = useState([]);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedStudies, setSelectedStudies] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Écoute Firestore en temps réel
   useEffect(() => {
@@ -52,51 +56,44 @@ export default function EtudesScreen() {
     return () => unsubscribe();
   }, []);
 
-  // Ajouter ou retirer une étude sélectionnée
+
+  // Vérification si user est admin
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user && adminEmails.includes(user.email)) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+      setDeleteMode(false);      // Enlever mode suppression si pas admin
+      setSelectedStudies([]);    // Clear sélection aussi
+    }
+  }, [auth.currentUser]); // à modifier si besoin (sinon ajouter listener auth)
+
+
   const toggleStudySelection = (id) => {
     setSelectedStudies((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  // Supprimer les études sélectionnées dans Firestore
   const handleDeleteSelected = async () => {
-    if (selectedStudies.length === 0) {
-      Alert.alert('Aucune sélection', 'Sélectionnez au moins une étude à supprimer.');
-      return;
+    if (selectedStudies.length === 0) return;
+
+    // Supprimer dans Firestore
+    try {
+      await Promise.all(
+        selectedStudies.map(async (id) => {
+          await deleteDoc(doc(db, 'etudes', id));
+        })
+      );
+      Alert.alert('Succès', 'Études supprimées.');
+    } catch (error) {
+      console.error('Erreur suppression études:', error);
+      Alert.alert('Erreur', "Impossible de supprimer les études.");
     }
 
-    Alert.alert(
-      'Confirmer la suppression',
-      `Supprimer ${selectedStudies.length} étude(s) ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await Promise.all(
-                selectedStudies.map((id) => deleteDoc(doc(db, 'etudes', id)))
-              );
-              setSelectedStudies([]);
-              setDeleteMode(false);
-              Alert.alert('Succès', 'Étude(s) supprimée(s)');
-            } catch (error) {
-              console.error('Erreur suppression études:', error);
-              Alert.alert('Erreur', 'Impossible de supprimer les études.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  // Récupère l'image en fonction du domaine ou celle par défaut
-  const getImageForDomaine = (domaine) => {
-    if (!domaine) return domaineImages.default;
-    const key = domaine.toLowerCase();
-    return domaineImages[key] || domaineImages.default;
+    setSelectedStudies([]);
+    setDeleteMode(false);
   };
 
   return (
@@ -104,17 +101,11 @@ export default function EtudesScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
 
-        {studies.length === 0 && (
-          <Text style={{ textAlign: 'center', marginTop: 30, color: '#666' }}>
-            Aucune étude disponible
-          </Text>
-        )}
-
         {studies.map((item) => (
           <View key={item.id} style={styles.card}>
             <View style={styles.leftIcon}>
               <Image
-                source={getImageForDomaine(item.domaine)}
+                source={require('../assets/snack-icon.png')}
                 style={styles.icon}
               />
             </View>
@@ -154,41 +145,38 @@ export default function EtudesScreen() {
         ))}
       </ScrollView>
 
-      {deleteMode ? (
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.redButton}
-            onPress={handleDeleteSelected}
-          >
-            <Text style={styles.redButtonText}>Confirmer suppression</Text>
-          </TouchableOpacity>
+      {/* --- AFFICHER SEULEMENT POUR ADMIN --- */}
+      {isAdmin && (
+        deleteMode ? (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.redButton} onPress={handleDeleteSelected}>
+              <Text style={styles.redButtonText}>Confirmer suppression</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.redButton, { backgroundColor: '#aaa' }]}
-            onPress={() => {
-              setDeleteMode(false);
-              setSelectedStudies([]);
-            }}
-          >
-            <Text style={styles.redButtonText}>Annuler</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.greenButton}
-            onPress={() => navigation.navigate('AjouterEtude')}
-          >
-            <Text style={styles.greenButtonText}>Ajouter une étude</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.redButton, { backgroundColor: '#aaa' }]}
+              onPress={() => {
+                setDeleteMode(false);
+                setSelectedStudies([]);
+              }}
+            >
+              <Text style={styles.redButtonText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.greenButton}
+              onPress={() => navigation.navigate('AjouterEtude')}
+            >
+              <Text style={styles.greenButtonText}>Ajouter une étude</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.redButton}
-            onPress={() => setDeleteMode(true)}
-          >
-            <Text style={styles.redButtonText}>Supprimer une étude</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity style={styles.redButton} onPress={() => setDeleteMode(true)}>
+              <Text style={styles.redButtonText}>Supprimer une étude</Text>
+            </TouchableOpacity>
+          </View>
+        )
       )}
     </SafeAreaView>
   );
