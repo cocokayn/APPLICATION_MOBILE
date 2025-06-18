@@ -7,20 +7,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-<<<<<<< HEAD
-      "image": "./assets/logo-512.png",
-=======
       "image": "./assets/avatar.png",
->>>>>>> d2ebe5facc1cb84683000396b814bd5bb3f1b3da
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "y",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
@@ -31,11 +23,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "dcd52db7-36b4-48bd-91e3-ac3dc57ba1ea"
-      }
     }
   }
 }
