@@ -8,10 +8,10 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
-  ScrollView,
   Modal,
   TextInput,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,6 +47,7 @@ export default function NewsList() {
       },
     ],
   });
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedArticleUrl, setSelectedArticleUrl] = useState(null);
   const [modalTextArticle, setModalTextArticle] = useState(null);
@@ -61,7 +62,6 @@ export default function NewsList() {
 
   useEffect(() => {
     loadJeArticles();
-
     categories.forEach(async (cat) => {
       if (cat.value !== 'all' && cat.value !== 'je') {
         try {
@@ -176,129 +176,144 @@ export default function NewsList() {
     );
   };
 
+  const filteredCategories =
+    selectedCategory === 'all'
+      ? categories.filter(cat => cat.value !== 'all')
+      : [categories.find(cat => cat.value === selectedCategory)];
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ScrollView horizontal contentContainerStyle={styles.filterContainer} showsHorizontalScrollIndicator={false}>
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat.value}
-              style={[styles.filterButton, selectedCategory === cat.value && styles.selectedFilter]}
-              onPress={() => setSelectedCategory(cat.value)}
-            >
-              <Text style={[styles.filterText, selectedCategory === cat.value && styles.selectedFilterText]}>
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+      <FlatList
+        data={filteredCategories}
+        keyExtractor={(item) => item?.value}
+        ListHeaderComponent={
+          <>
+            <ScrollView horizontal contentContainerStyle={styles.filterContainer} showsHorizontalScrollIndicator={false}>
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[styles.filterButton, selectedCategory === cat.value && styles.selectedFilter]}
+                  onPress={() => setSelectedCategory(cat.value)}
+                >
+                  <Text style={[styles.filterText, selectedCategory === cat.value && styles.selectedFilterText]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-        {isAdmin && selectedCategory === 'je' && (
-          <TouchableOpacity style={styles.addButton} onPress={() => setModalAjoutVisible(true)}>
-            <Text style={styles.addButtonText}>+ Ajouter un article</Text>
+            {isAdmin && selectedCategory === 'je' && (
+              <TouchableOpacity style={styles.addButton} onPress={() => setModalAjoutVisible(true)}>
+                <Text style={styles.addButtonText}>+ Ajouter un article</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        }
+        renderItem={({ item }) => renderArticlesForCategory(item.label === 'JE' ? 'JE' : item.label)}
+        contentContainerStyle={styles.scrollContent}
+      />
+
+      {/* WebView Modal */}
+      <Modal visible={!!selectedArticleUrl} animationType="slide">
+        <View style={{ flex: 1 }}>
+          {selectedArticleUrl && <WebView source={{ uri: selectedArticleUrl }} />}
+          <TouchableOpacity onPress={() => setSelectedArticleUrl(null)} style={styles.closeButtonBottom}>
+            <Text style={styles.modalClose}>Fermer</Text>
           </TouchableOpacity>
-        )}
+        </View>
+      </Modal>
 
-        {selectedCategory === 'all'
-          ? categories.filter(cat => cat.value !== 'all').map(cat => renderArticlesForCategory(cat.label === 'JE' ? 'JE' : cat.label))
-          : renderArticlesForCategory(selectedCategory === 'je' ? 'JE' : categories.find(cat => cat.value === selectedCategory)?.label)}
+      {/* Ajout Modal */}
+<Modal visible={modalAjoutVisible} animationType="slide">
+  <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 60 }}>
+    <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+      <TouchableOpacity
+        style={[styles.filterButton, addType === 'text' && styles.selectedFilter]}
+        onPress={() => setAddType('text')}
+      >
+        <Text style={[styles.filterText, addType === 'text' && styles.selectedFilterText]}>Texte</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.filterButton, addType === 'link' && styles.selectedFilter, { marginLeft: 10 }]}
+        onPress={() => setAddType('link')}
+      >
+        <Text style={[styles.filterText, addType === 'link' && styles.selectedFilterText]}>Lien</Text>
+      </TouchableOpacity>
+    </View>
 
-        <Modal visible={!!selectedArticleUrl} animationType="slide">
-          <View style={{ flex: 1 }}>
-            {selectedArticleUrl && <WebView source={{ uri: selectedArticleUrl }} />}
-            <TouchableOpacity onPress={() => setSelectedArticleUrl(null)} style={styles.closeButtonBottom}>
-              <Text style={styles.modalClose}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
+    <TextInput
+      placeholder="Titre"
+      placeholderTextColor="#999"
+      value={newTitle}
+      onChangeText={setNewTitle}
+      style={[styles.input, { marginBottom: 20 }]}
+    />
+    <TextInput
+      placeholder="Description"
+      placeholderTextColor="#999"
+      value={newDescription}
+      onChangeText={setNewDescription}
+      style={[styles.input, { marginBottom: 20 }]}
+    />
+    {addType === 'link' && (
+      <TextInput
+        placeholder="Lien de l'article"
+        placeholderTextColor="#999"
+        value={newUrl}
+        onChangeText={setNewUrl}
+        style={[styles.input, { marginBottom: 20 }]}
+      />
+    )}
 
-        <Modal visible={modalAjoutVisible} animationType="slide">
-          <ScrollView contentContainerStyle={{ padding: 20 }}>
-            <View style={{ flexDirection: 'row', marginBottom: 20 }}>
-              <TouchableOpacity
-                style={[styles.filterButton, addType === 'text' && styles.selectedFilter]}
-                onPress={() => setAddType('text')}
-              >
-                <Text style={[styles.filterText, addType === 'text' && styles.selectedFilterText]}>Texte</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.filterButton, addType === 'link' && styles.selectedFilter, { marginLeft: 10 }]}
-                onPress={() => setAddType('link')}
-              >
-                <Text style={[styles.filterText, addType === 'link' && styles.selectedFilterText]}>Lien</Text>
-              </TouchableOpacity>
-            </View>
+    <TouchableOpacity onPress={pickImage} style={[styles.imagePicker, { marginBottom: 20 }]}>
+      <Text style={{ color: '#fff' }}>Choisir une image</Text>
+    </TouchableOpacity>
+    {newImage && (
+      <Image
+        source={{ uri: newImage }}
+        style={{ width: '100%', height: 200, marginBottom: 20, borderRadius: 10 }}
+      />
+    )}
 
-            <TextInput
-              placeholder="Titre"
-              value={newTitle}
-              onChangeText={setNewTitle}
-              style={[styles.input, { marginBottom: 20 }]}
+    <TouchableOpacity style={styles.addButton} onPress={addArticle}>
+      <Text style={styles.addButtonText}>Ajouter</Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setModalAjoutVisible(false)}
+      style={[styles.closeButtonBottom, { marginTop: 10, position: 'relative', bottom: 0 }]}
+    >
+      <Text style={styles.addButtonText}>Annuler</Text>
+    </TouchableOpacity>
+  </ScrollView>
+</Modal>
+
+
+      {/* Modal Texte */}
+      <Modal visible={!!modalTextArticle} animationType="slide" onRequestClose={() => setModalTextArticle(null)}>
+        <ScrollView contentContainerStyle={{ padding: 20, flex: 1, backgroundColor: '#fff' }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 24, marginBottom: 10 }}>{modalTextArticle?.title}</Text>
+          {modalTextArticle?.urlToImage && (
+            <Image
+              source={{ uri: modalTextArticle.urlToImage }}
+              style={{ width: '100%', height: 200, marginBottom: 10, borderRadius: 10 }}
             />
-            <TextInput
-              placeholder="Description"
-              value={newDescription}
-              onChangeText={setNewDescription}
-              style={[styles.input, { marginBottom: 20 }]}
-            />
-            {addType === 'link' && (
-              <TextInput
-                placeholder="Lien de l'article"
-                value={newUrl}
-                onChangeText={setNewUrl}
-                style={[styles.input, { marginBottom: 20 }]}
-              />
-            )}
-
-            <TouchableOpacity onPress={pickImage} style={[styles.imagePicker, { marginBottom: 20 }]}>
-              <Text style={{ color: '#fff' }}>Choisir une image</Text>
-            </TouchableOpacity>
-            {newImage && (
-              <Image
-                source={{ uri: newImage }}
-                style={{ width: '100%', height: 200, marginBottom: 20, borderRadius: 10 }}
-              />
-            )}
-
-            <TouchableOpacity style={styles.addButton} onPress={addArticle}>
-              <Text style={styles.addButtonText}>Ajouter</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setModalAjoutVisible(false)}
-              style={[styles.closeButtonBottom, { marginTop: 20, position: 'relative', bottom: 0 }]}
-            >
-              <Text style={styles.modalClose}>Annuler</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Modal>
-
-        {/* Modal texte pour article JE sans URL */}
-        <Modal visible={!!modalTextArticle} animationType="slide" onRequestClose={() => setModalTextArticle(null)}>
-          <ScrollView contentContainerStyle={{ padding: 20, flex: 1, backgroundColor: '#fff' }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 24, marginBottom: 10 }}>{modalTextArticle?.title}</Text>
-            {modalTextArticle?.urlToImage && (
-              <Image
-                source={{ uri: modalTextArticle.urlToImage }}
-                style={{ width: '100%', height: 200, marginBottom: 10, borderRadius: 10 }}
-              />
-            )}
-            <Text style={{ fontSize: 16 }}>{modalTextArticle?.description}</Text>
-            <TouchableOpacity
-              onPress={() => setModalTextArticle(null)}
-              style={[styles.closeButtonBottom, { position: 'relative', bottom: 0, marginTop: 20 }]}
-            >
-              <Text style={styles.modalClose}>Fermer</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Modal>
-      </ScrollView>
+          )}
+          <Text style={{ fontSize: 16 }}>{modalTextArticle?.description}</Text>
+          <TouchableOpacity
+            onPress={() => setModalTextArticle(null)}
+            style={[styles.closeButtonBottom, { position: 'relative', bottom: 0, marginTop: 20 }]}
+          >
+            <Text style={styles.modalClose}>Fermer</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
-  scrollContent: { paddingBottom: 20 },
+  container: { flex: 1, backgroundColor: '#f9f9f9', paddingTop: 20 },
+  scrollContent: { paddingBottom: 60 },
   scrollContainer: { paddingHorizontal: 16 },
   verticalListContainer: { paddingHorizontal: 0 },
   articleBubble: {
@@ -373,7 +388,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   imagePicker: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#376787',
     borderRadius: 15,
     padding: 12,
     alignItems: 'center',
