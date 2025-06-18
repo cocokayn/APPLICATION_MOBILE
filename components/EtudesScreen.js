@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Image,
+  ImageBackground,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
   Alert,
-  ImageBackground,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
@@ -267,28 +266,32 @@ const styles = StyleSheet.create({
   },
   redButton: {
     backgroundColor: '#e53935',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    height: 48,
     borderRadius: 10,
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   greenButton: {
     backgroundColor: '#008000',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    height: 48,
     borderRadius: 10,
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   redButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 15,
+    textAlign: 'center',
   },
   greenButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 15,
+    textAlign: 'center',
   },
 });
