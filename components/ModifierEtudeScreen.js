@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   deleteButton: {
-    backgroundColor: 'red',
+    backgroundColor: '#e53935',
   },
   buttonText: {
     color: '#fff',
