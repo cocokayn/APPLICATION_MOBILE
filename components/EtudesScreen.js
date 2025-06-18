@@ -8,11 +8,12 @@ import {
   ScrollView,
   SafeAreaView,
   Alert,
+  ImageBackground,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
 import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '../utils/firebaseConfig';
+import { db, auth } from '../utils/firebaseConfig';
+import { adminEmails } from '../utils/adminConfig';
 
 // Import statique des images domaine -> image
 const domaineImages = {
@@ -22,13 +23,8 @@ const domaineImages = {
   'Ingénierie et systèmes': require('../assets/Ing-Sys.jpg'),
   'Conseil et entrepenariat': require('../assets/entrepreneuriat.jpg'),
   'Digital & Culture': require('../assets/Digital-culture.png'),
-  // ajoute ici d'autres domaines et leurs images correspondantes
-  // Par défaut, tu peux aussi avoir une image fallback
   default: require('../assets/snack-icon.png'),
 };
-
-import { auth } from '../utils/firebaseConfig'; // Import de l'auth Firebase
-import { adminEmails } from '../utils/adminConfig'; // Liste des emails admin
 
 export default function EtudesScreen() {
   const navigation = useNavigation();
@@ -37,7 +33,6 @@ export default function EtudesScreen() {
   const [selectedStudies, setSelectedStudies] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Écoute Firestore en temps réel
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, 'etudes'),
@@ -52,23 +47,19 @@ export default function EtudesScreen() {
         console.error('Erreur récupération temps réel études Firestore :', error);
       }
     );
-
     return () => unsubscribe();
   }, []);
 
-
-  // Vérification si user est admin
   useEffect(() => {
     const user = auth.currentUser;
     if (user && adminEmails.includes(user.email)) {
       setIsAdmin(true);
     } else {
       setIsAdmin(false);
-      setDeleteMode(false);      // Enlever mode suppression si pas admin
-      setSelectedStudies([]);    // Clear sélection aussi
+      setDeleteMode(false);
+      setSelectedStudies([]);
     }
-  }, [auth.currentUser]); // à modifier si besoin (sinon ajouter listener auth)
-
+  }, [auth.currentUser]);
 
   const toggleStudySelection = (id) => {
     setSelectedStudies((prev) =>
@@ -78,8 +69,6 @@ export default function EtudesScreen() {
 
   const handleDeleteSelected = async () => {
     if (selectedStudies.length === 0) return;
-
-    // Supprimer dans Firestore
     try {
       await Promise.all(
         selectedStudies.map(async (id) => {
@@ -102,46 +91,46 @@ export default function EtudesScreen() {
         <Text style={styles.sectionTitle}>📚 Études disponibles - EPF Projets</Text>
 
         {studies.map((item) => (
-          <View key={item.id} style={styles.card}>
-            <View style={styles.leftIcon}>
-              <Image
-                source={require('../assets/snack-icon.png')}
-                style={styles.icon}
-              />
-            </View>
+          <ImageBackground
+            key={item.id}
+            source={domaineImages[item.domaine] || domaineImages.default}
+            style={styles.cardBackground}
+            imageStyle={styles.cardImage}
+          >
+            <View style={styles.overlay}>
+              <View style={styles.content}>
+                <Text style={styles.category}>
+                  {item.domaine} • {item.duree || '-'}
+                </Text>
+                <Text style={styles.title}>{item.titre}</Text>
+                {item.deadline && (
+                  <Text style={styles.deadline}>Date limite : {item.deadline}</Text>
+                )}
+              </View>
 
-            <View style={styles.content}>
-              <Text style={styles.category}>
-                {item.domaine} • {item.duree || '-'}
-              </Text>
-              <Text style={styles.title}>{item.titre}</Text>
-              {item.deadline && (
-                <Text style={styles.deadline}>Date limite : {item.deadline}</Text>
+              {deleteMode ? (
+                <TouchableOpacity
+                  style={styles.checkboxCircle}
+                  onPress={() => toggleStudySelection(item.id)}
+                >
+                  <View
+                    style={
+                      selectedStudies.includes(item.id)
+                        ? styles.checkboxSelected
+                        : styles.checkbox
+                    }
+                  />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => navigation.navigate('EtudesDetail', { study: item })}
+                >
+                  <Text style={styles.buttonText}>Voir plus</Text>
+                </TouchableOpacity>
               )}
             </View>
-
-            {deleteMode ? (
-              <TouchableOpacity
-                style={styles.checkboxCircle}
-                onPress={() => toggleStudySelection(item.id)}
-              >
-                <View
-                  style={
-                    selectedStudies.includes(item.id)
-                      ? styles.checkboxSelected
-                      : styles.checkbox
-                  }
-                />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => navigation.navigate('EtudesDetail', { study: item })}
-              >
-                <Text style={styles.buttonText}>Voir plus</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          </ImageBackground>
         ))}
       </ScrollView>
 
@@ -184,7 +173,7 @@ export default function EtudesScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { padding: 20, paddingBottom: 120 },
+  container: { padding: 20, paddingBottom: 140 },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -192,26 +181,48 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
   },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: '#f2f2f2',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 12,
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+
+  // Cartes avec image en fond
+  cardBackground: {
+    height: 140,
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginBottom: 15,
+    justifyContent: 'flex-end',
   },
-  leftIcon: { marginRight: 12, marginTop: 5 },
-  icon: { width: 30, height: 30, resizeMode: 'contain' },
+  cardImage: {
+    resizeMode: 'cover',
+    opacity: 0.65,
+  },
+  overlay: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    padding: 15,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    height: '100%',
+  },
+
+  // Texte sur carte
   content: { flex: 1 },
   category: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#376787',
+    color: '#fff',
     marginBottom: 3,
   },
-  title: { fontSize: 15, fontWeight: '500', color: '#000' },
-  deadline: { fontSize: 13, color: '#888', marginTop: 4 },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  deadline: {
+    fontSize: 13,
+    color: '#eee',
+    marginTop: 4,
+  },
+
+  // Bouton Voir plus
   button: {
     backgroundColor: '#376787',
     paddingVertical: 8,
@@ -220,6 +231,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   buttonText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+
+  // Checkbox pour admin
   checkboxCircle: {
     alignSelf: 'center',
     marginLeft: 10,
@@ -230,17 +243,19 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#999',
+    borderColor: '#ccc',
+    backgroundColor: 'transparent',
   },
   checkboxSelected: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#376787',
+    backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#376787',
+    borderColor: '#fff',
   },
 
+  // Boutons admin
   actionButtons: {
     position: 'absolute',
     bottom: 20,
