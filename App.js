@@ -1,10 +1,12 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; // plus utile
 
-// Import des composants
+// Import de ton SwipeTabs personnalisé
+import SwipeTabs from './components/SwipeTabs';
+
+// Import des autres composants
 import LoginScreen from './components/LoginScreen';
 import Pagegarde from './components/Pagegarde';
 import NewsList from './components/Newslist';
@@ -28,54 +30,31 @@ import ModifierEtudeScreen from './components/ModifierEtudeScreen';
 import ConsulterCandidatScreen from './components/ConsulterCandidatScreen';
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
 
-// Écran combiné : Page d’accueil + liste articles
-function HomeScreen() {
+// Garder HomeScreen si besoin pour la page Articles + Pagegarde (optionnel)
+function HomeScreen({ navigation }) {
   return (
     <>
-     <Pagegarde/>
-      <NewsList />
+      <Pagegarde />
+      <NewsList navigation={navigation} />
     </>
   );
 }
 
-// Barre de navigation du bas
-function MainTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
+// MainTabs est remplacé par SwipeTabs, on n’a plus besoin de createBottomTabNavigator
 
-          if (route.name === 'Etudes') iconName = 'school-outline';
-          else if (route.name === 'Evénements') iconName = 'calendar-outline';
-          else if (route.name === 'Articles') iconName = 'newspaper-outline';
-          else if (route.name === 'Profil') iconName = 'person-outline';
-
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#376787',     // 🔵 Bleu personnalisé
-        tabBarInactiveTintColor: '#b0b0b0',   // 🔘 Gris clair
-      })}
-    >
-      <Tab.Screen name="Etudes" component={EtudesScreen} />
-      <Tab.Screen name="Evénements" component={EvenementsScreen} />
-      <Tab.Screen name="Articles" component={HomeScreen} />
-      <Tab.Screen name="Profil" component={Profilscreen} />
-    </Tab.Navigator>
-  );
-}
-
-// App principale avec stack
 export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="CreerCompte" component={CreerCompte} />
-        <Stack.Screen name="Main" component={MainTabs} />
+
+        {/* Ici, on utilise SwipeTabs pour la navigation principale avec swipe + onglets */}
+        <Stack.Screen name="Main" component={SwipeTabs} />
+
+        {/* Autres écrans du stack */}
+        <Stack.Screen name="EvenementsScreen" component={EvenementsScreen} />
         <Stack.Screen name="Détail Article" component={NewsDetail} />
         <Stack.Screen name="Preferences" component={PreferenceScreen} options={{ title: 'Préférences' }} />
         <Stack.Screen name="QuiSommesNous" component={QuiSommesNousScreen} />

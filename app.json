@@ -1,14 +1,17 @@
 {
   "expo": {
-    "name": "app-test",
-    "slug": "snack-c89173e2-9940-4ca1-958a-e873eb8086e5",
+    "name": "EPF-Projets JE'Connect",
+    "slug": "epf-projets-jeconnect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
+<<<<<<< HEAD
       "image": "./assets/logo-512.png",
+=======
+      "image": "./assets/avatar.png",
+>>>>>>> d2ebe5facc1cb84683000396b814bd5bb3f1b3da
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

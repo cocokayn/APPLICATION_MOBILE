@@ -1,68 +1,91 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { firestore } from '../utils/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function ConsulterCandidatScreen() {
-  const navigation = useNavigation();
   const route = useRoute();
-  const { candidat, etude } = route.params || {};
+  const navigation = useNavigation();
+  const candidat = route.params?.candidat;
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleAccepter = () => {
-    // Ici, tu pourras appeler une API pour accepter le candidat dans MySQL ou Firestore
-    Alert.alert('Succès', `${candidat.nom} a été accepté pour l'étude !`, [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
-  };
+  useEffect(() => {
+    const fetchCandidatData = async () => {
+      if (!candidat?.id) return;
 
-  if (!candidat || !etude) {
+      try {
+        const userRef = doc(firestore, 'users', candidat.id);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          setUserData(userSnap.data());
+        } else {
+          console.warn("Candidat non trouvé");
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement du candidat :", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCandidatData();
+  }, [candidat]);
+
+  if (!candidat) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <Text style={styles.errorText}>Candidat ou étude non trouvé.</Text>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>Aucun candidat à afficher.</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Profil de {candidat.prenom} {candidat.nom}</Text>
+    <SafeAreaView style={styles.container}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Text style={styles.backText}>← Retour</Text>
+      </TouchableOpacity>
 
-        <Text style={styles.label}>Email :</Text>
-        <Text style={styles.value}>{candidat.email}</Text>
+      <Text style={styles.title}>Profil du Candidat</Text>
 
-        <Text style={styles.label}>GitHub :</Text>
-        <Text style={styles.value}>{candidat.github || 'Non fourni'}</Text>
+      <Text style={styles.label}>Nom complet :</Text>
+      <Text style={styles.value}>{candidat.nom}</Text>
 
-        <Text style={styles.label}>Portfolio :</Text>
-        <Text style={styles.value}>{candidat.portfolio || 'Non fourni'}</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#376787" style={{ marginTop: 20 }} />
+      ) : userData ? (
+        <>
+          <Text style={styles.label}>Email :</Text>
+          <Text style={styles.value}>{userData.email || 'Non renseigné'}</Text>
 
-        <TouchableOpacity style={styles.button} onPress={handleAccepter}>
-          <Text style={styles.buttonText}>Accepter sa candidature</Text>
-        </TouchableOpacity>
+          <Text style={styles.label}>Téléphone :</Text>
+          <Text style={styles.value}>{userData.telephone || 'Non renseigné'}</Text>
 
-        <TouchableOpacity style={styles.link} onPress={() => navigation.goBack()}>
-          <Text style={styles.linkText}>Retour</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          {/* Tu peux ajouter d'autres infos ici si nécessaire */}
+        </>
+      ) : (
+        <Text style={styles.errorText}>Informations utilisateur introuvables.</Text>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { padding: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
-  label: { fontWeight: 'bold', marginTop: 15 },
-  value: { fontSize: 16, marginTop: 5 },
-  button: {
-    backgroundColor: '#376787',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 30,
+  container: { flex: 1, backgroundColor: '#fff', padding: 20 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#376787' },
+  label: { fontWeight: 'bold', marginTop: 15, fontSize: 16 },
+  value: { fontSize: 16, marginTop: 5, color: '#333' },
+  errorText: { color: 'red', fontSize: 16, marginTop: 20 },
+  backButton: {
+    marginBottom: 10,
   },
-  buttonText: { color: '#fff', fontWeight: 'bold' },
-  link: { marginTop: 20 },
-  linkText: { color: '#007bff', textAlign: 'center' },
-  errorText: { marginTop: 50, textAlign: 'center', color: 'red' },
+  backText: {
+    fontSize: 16,
+    color: '#376787',
+    fontWeight: 'bold',
+      marginTop: 20,
+  marginBottom: 10,
+  },
 });
