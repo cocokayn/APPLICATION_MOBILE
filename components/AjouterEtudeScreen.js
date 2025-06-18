@@ -19,15 +19,14 @@ import { collection, addDoc, Timestamp } from 'firebase/firestore';
 const { width, height } = Dimensions.get('window');
 
 const domainImages = {
-<<<<<<< HEAD
+
   'IT & Digital': require('../assets/IT_Digital.jpg'),
   'Ingénierie et RSE': require('../assets/Ingénierie-RSE.jpg'),
   'Traduction Technique': require('../assets/traduction-techniques.jpg'),
   'Ingénierie et systèmes': require('../assets/Ing-Sys.jpg'),
   'Conseil et entrepenariat': require('../assets/entrepreneuriat.jpg'),
   'Digital & Culture': require('../assets/Digital-culture.png'),
-=======
->>>>>>> 54fc96d95d6cdfc6d0db515db1d2cb8019aa69a3
+
   default: require('../assets/snack-icon.png'), // Image par défaut
 };
 
