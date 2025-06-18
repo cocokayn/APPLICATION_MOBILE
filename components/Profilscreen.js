@@ -10,9 +10,8 @@ import {
   Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '../utils/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function ProfileScreen() {
   const [avatar] = useState(require('../assets/avatar.png'));
@@ -22,24 +21,25 @@ export default function ProfileScreen() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const loadProfileData = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-      try {
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
+    const docRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setNom(data.nom || '');
           setPrenom(data.prenom || '');
         }
-      } catch (err) {
-        console.error('Erreur de chargement du profil :', err);
+      },
+      (error) => {
+        console.error('Erreur écoute temps réel profil :', error);
       }
-    };
+    );
 
-    loadProfileData();
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = () => setLogoutModalVisible(true);
