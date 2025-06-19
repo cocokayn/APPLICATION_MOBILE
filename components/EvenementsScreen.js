@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { db } from '../utils/firebaseConfig';
 import { collection, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { auth } from '../utils/firebaseConfig';
+import { adminEmails } from '../utils/adminConfig';
 
 export default function EvenementsScreen() {
   const [events, setEvents] = useState([]);
@@ -24,6 +26,8 @@ export default function EvenementsScreen() {
   const [pickerModalVisible, setPickerModalVisible] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [flashingId, setFlashingId] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+ 
 
   // State local pour stocker les événements où l'utilisateur est inscrit
   const [inscribedEvents, setInscribedEvents] = useState([]);
@@ -44,6 +48,15 @@ export default function EvenementsScreen() {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user && adminEmails.includes(user.email)) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
   }, []);
 
   const startFlash = (eventId) => {
@@ -190,17 +203,19 @@ export default function EvenementsScreen() {
           );
         })}
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.greenButton} onPress={handleAdd}>
-            <Text style={styles.buttonLabel}>Ajouter un événement</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.orangeButton} onPress={handleModify}>
-            <Text style={styles.buttonLabel}>Modifier un événement</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.redButton} onPress={handleDelete}>
-            <Text style={styles.buttonLabel}>Supprimer un événement</Text>
-          </TouchableOpacity>
-        </View>
+{isAdmin && (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.greenButton} onPress={handleAdd}>
+              <Text style={styles.buttonLabel}>Ajouter un événement</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.orangeButton} onPress={handleModify}>
+              <Text style={styles.buttonLabel}>Modifier un événement</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.redButton} onPress={handleDelete}>
+              <Text style={styles.buttonLabel}>Supprimer un événement</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
 
       {/* Confirm Modal */}
