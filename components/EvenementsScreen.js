@@ -187,9 +187,7 @@ export default function EvenementsScreen() {
                   </TouchableOpacity>
                 ) : (
                   <>
-                    <TouchableOpacity style={styles.button} onPress={() => handleInscription(event)}>
-                      <Text style={styles.buttonText}>S'inscrire</Text>
-                    </TouchableOpacity>
+                    
                     <TouchableOpacity
                       style={styles.unregisterButton}
                       onPress={() => handleDesinscription(event)}
