@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../utils/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collectionGroup, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, collectionGroup, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const { width, height } = Dimensions.get('window');
 
@@ -32,7 +32,6 @@ export default function HistoriqueScreen() {
 
   const fetchHistorique = async () => {
     try {
-      // Chercher les études auxquelles l'utilisateur a postulé
       const etudesSnapshot = await getDocs(collectionGroup(db, 'candidats'));
       const etudesResult = [];
 
@@ -49,17 +48,18 @@ export default function HistoriqueScreen() {
 
       const totalJehValue = etudesResult.reduce((sum, etude) => sum + (parseFloat(etude.jeh) || 0), 0);
 
-      // Chercher les événements
-      const eventsSnapshot = await getDocs(collectionGroup(db, 'candidats'));
+      const eventsSnapshot = await getDocs(collection(db, 'evenements'));
       const evenementsResult = [];
 
-      for (const docSnap of eventsSnapshot.docs) {
-        const data = docSnap.data();
-        if (data.id === userId && docSnap.ref.path.includes('evenements')) {
-          const eventId = docSnap.ref.parent.parent.id;
-          const eventDoc = await getDoc(doc(db, 'evenements', eventId));
-          if (eventDoc.exists()) {
-            evenementsResult.push({ id: eventId, ...eventDoc.data() });
+      for (const eventDoc of eventsSnapshot.docs) {
+        const inscriptionsRef = collection(db, 'evenements', eventDoc.id, 'inscriptions');
+        const inscriptionsSnapshot = await getDocs(inscriptionsRef);
+
+        for (const inscDoc of inscriptionsSnapshot.docs) {
+          const inscription = inscDoc.data();
+          if (inscription.userId === userId) {
+            evenementsResult.push({ id: eventDoc.id, ...eventDoc.data() });
+            break;
           }
         }
       }
@@ -102,6 +102,19 @@ export default function HistoriqueScreen() {
               <Text style={styles.itemDetail}>Domaine : {etude.domaine}</Text>
               <Text style={styles.itemDetail}>Durée : {etude.duree}</Text>
               <Text style={styles.itemDetail}>JEH : {etude.jeh}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>🎟️ Événements :</Text>
+          {evenements.map((event) => (
+            <View key={event.id} style={styles.item}>
+              <Text style={styles.itemTitle}>{event.nom}</Text>
+              <Text style={styles.itemDetail}>Lieu : {event.lieu}</Text>
+              <Text style={styles.itemDetail}>
+                Date : {event.date?.toDate?.().toLocaleString?.() || 'Date inconnue'}
+              </Text>
             </View>
           ))}
         </View>

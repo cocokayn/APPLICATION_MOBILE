@@ -8,6 +8,7 @@ import {
   Modal,
   FlatList,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -171,7 +172,7 @@ const [confirmAcceptVisible, setConfirmAcceptVisible] = useState(false);
 
 {isAdmin && (
   <TouchableOpacity
-    style={[styles.button, { backgroundColor: '#e67e22' }]}
+    style={[styles.button, { backgroundColor: '#376787' }]}
     onPress={() => setSelectModalVisible(true)}
   >
     <Text style={styles.buttonText}>Accepter un candidat</Text>
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
     fontSize: width * 0.06,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: height * 0.03,
+    marginBottom: height * 0.001,
   },
   card: {
     backgroundColor: '#f0f0f0',
