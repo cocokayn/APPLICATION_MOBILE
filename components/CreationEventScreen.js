@@ -10,7 +10,9 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { db } from '../utils/firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
@@ -22,14 +24,16 @@ export default function AjouterEvenementScreen() {
 
   const [nom, setNom] = useState('');
   const [domaine, setDomaine] = useState('');
-  const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
   const [places, setPlaces] = useState('');
   const [lieu, setLieu] = useState('');
+  const [dateTime, setDateTime] = useState(new Date());
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const scrollViewRef = useRef(null);
   const nomRef = useRef(null);
-  const dateRef = useRef(null);
   const descriptionRef = useRef(null);
   const placesRef = useRef(null);
   const lieuRef = useRef(null);
@@ -46,14 +50,8 @@ export default function AjouterEvenementScreen() {
   };
 
   const handleCreate = async () => {
-    if (!nom || !domaine || !date || !description || !places || !lieu) {
+    if (!nom || !domaine || !description || !places || !lieu || !dateTime) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
-      return;
-    }
-
-    const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) {
-      Alert.alert('Erreur', "La date n'est pas valide (format attendu : YYYY-MM-DD).");
       return;
     }
 
@@ -67,7 +65,7 @@ export default function AjouterEvenementScreen() {
       const newEvent = {
         nom,
         domaine,
-        date: Timestamp.fromDate(dateObj),
+        date: Timestamp.fromDate(dateTime),
         description,
         places: placesInt,
         lieu,
@@ -76,12 +74,31 @@ export default function AjouterEvenementScreen() {
 
       await addDoc(collection(db, 'evenements'), newEvent);
       Alert.alert('Succès', "L'événement a été ajouté !");
-
-      // Navigation vers EvenementsScreen en passant le nom créé
       navigation.navigate('EvenementsScreen', { createdEventName: nom });
     } catch (error) {
       console.error('Erreur ajout événement:', error);
       Alert.alert('Erreur', "Impossible d'ajouter l'événement. Veuillez réessayer.");
+    }
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const updatedDate = new Date(dateTime);
+      updatedDate.setFullYear(selectedDate.getFullYear());
+      updatedDate.setMonth(selectedDate.getMonth());
+      updatedDate.setDate(selectedDate.getDate());
+      setDateTime(updatedDate);
+    }
+  };
+
+  const handleTimeChange = (event, selectedTime) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      const updatedDate = new Date(dateTime);
+      updatedDate.setHours(selectedTime.getHours());
+      updatedDate.setMinutes(selectedTime.getMinutes());
+      setDateTime(updatedDate);
     }
   };
 
@@ -111,30 +128,42 @@ export default function AjouterEvenementScreen() {
           style={styles.input}
           onFocus={() => scrollToInput(nomRef)}
           returnKeyType="next"
-          onSubmitEditing={() => dateRef.current.focus()}
           blurOnSubmit={false}
         />
 
         <TextInput
-          placeholder="Domaine"
+          placeholder="Type d'événement"
           value={domaine}
           onChangeText={setDomaine}
           style={styles.input}
           onFocus={() => scrollToInput(lieuRef)}
-          returnKeyType="next"
         />
 
-        <TextInput
-          ref={dateRef}
-          placeholder="Date de l’événement (YYYY-MM-DD)"
-          value={date}
-          onChangeText={setDate}
-          style={styles.input}
-          onFocus={() => scrollToInput(dateRef)}
-          returnKeyType="next"
-          onSubmitEditing={() => descriptionRef.current.focus()}
-          blurOnSubmit={false}
-        />
+        <Text style={styles.label}>Date :</Text>
+        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+          <Text>{dateTime.toLocaleDateString()}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={dateTime}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+          />
+        )}
+
+        <Text style={styles.label}>Heure :</Text>
+        <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.input}>
+          <Text>{dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+        </TouchableOpacity>
+        {showTimePicker && (
+          <DateTimePicker
+            value={dateTime}
+            mode="time"
+            display="default"
+            onChange={handleTimeChange}
+          />
+        )}
 
         <TextInput
           ref={descriptionRef}
@@ -146,9 +175,6 @@ export default function AjouterEvenementScreen() {
           numberOfLines={3}
           textAlignVertical="top"
           onFocus={() => scrollToInput(descriptionRef)}
-          returnKeyType="next"
-          onSubmitEditing={() => placesRef.current.focus()}
-          blurOnSubmit={false}
         />
 
         <TextInput
@@ -159,9 +185,6 @@ export default function AjouterEvenementScreen() {
           onChangeText={setPlaces}
           style={styles.input}
           onFocus={() => scrollToInput(placesRef)}
-          returnKeyType="next"
-          onSubmitEditing={() => lieuRef.current.focus()}
-          blurOnSubmit={false}
         />
 
         <TextInput
@@ -171,8 +194,6 @@ export default function AjouterEvenementScreen() {
           onChangeText={setLieu}
           style={styles.input}
           onFocus={() => scrollToInput(lieuRef)}
-          returnKeyType="done"
-          onSubmitEditing={handleCreate}
         />
 
         <Pressable style={styles.button} onPress={handleCreate}>
@@ -217,6 +238,12 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.015,
     borderRadius: 8,
     width: '100%',
+    justifyContent: 'center',
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   button: {
     backgroundColor: '#376787',

@@ -285,22 +285,36 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     backgroundColor: '#f2f2f2',
   },
-  eventTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 5 },
+  eventTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 5, paddingRight: 120},
   date: { fontSize: 14, color: '#333', marginBottom: 2 },
   lieu: { fontSize: 14, color: '#333', marginBottom: 5 },
   description: { fontSize: 14, color: '#555', marginBottom: 10 },
 
   placesBox: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    alignItems: 'center',
-  },
-  placesLabel: { fontSize: 14, color: '#444', fontWeight: '600' },
-  placesCount: {
-    fontSize: 36,
-    fontWeight: 'bold',
-  },
+  position: 'absolute',
+  top: 10,
+  right: 10,
+  backgroundColor: '#376787',
+  paddingVertical: 6,
+  paddingHorizontal: 10,
+  borderRadius: 8,
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 10,
+},
+
+  placesLabel: {
+  fontSize: 11,
+  color: '#fff',
+  fontWeight: '600',
+  fontWeight: 'bold'
+},
+
+placesCount: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#fff', 
+},
 
   buttonContainer: {
     flexDirection: 'row',

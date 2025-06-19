@@ -21,19 +21,16 @@ export default function ModifierEventScreen() {
 
   const [nom, setNom] = useState(event?.nom || '');
   const [domaine, setDomaine] = useState(event?.domaine || '');
-  const [date, setDate] = useState(event?.date?.toDate?.() || new Date());
   const [description, setDescription] = useState(event?.description || '');
   const [places, setPlaces] = useState(String(event?.places || ''));
   const [lieu, setLieu] = useState(event?.lieu || '');
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const onChangeDate = (event_, selectedDate) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) setDate(selectedDate);
-  };
+  const [dateTime, setDateTime] = useState(event?.date?.toDate?.() || new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const handleUpdate = async () => {
-    if (!nom || !domaine || !description || !places || !lieu || !date) {
+    if (!nom || !domaine || !description || !places || !lieu || !dateTime) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
       return;
     }
@@ -51,7 +48,7 @@ export default function ModifierEventScreen() {
         nom,
         domaine,
         description,
-        date,
+        date: dateTime,
         places: placesInt,
         lieu,
       });
@@ -61,6 +58,27 @@ export default function ModifierEventScreen() {
     } catch (error) {
       console.error(error);
       Alert.alert('Erreur', 'Une erreur est survenue lors de la mise à jour.');
+    }
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const newDate = new Date(dateTime);
+      newDate.setFullYear(selectedDate.getFullYear());
+      newDate.setMonth(selectedDate.getMonth());
+      newDate.setDate(selectedDate.getDate());
+      setDateTime(newDate);
+    }
+  };
+
+  const handleTimeChange = (event, selectedTime) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      const newDate = new Date(dateTime);
+      newDate.setHours(selectedTime.getHours());
+      newDate.setMinutes(selectedTime.getMinutes());
+      setDateTime(newDate);
     }
   };
 
@@ -92,19 +110,35 @@ export default function ModifierEventScreen() {
         <TextInput placeholder="Lieu" value={lieu} onChangeText={setLieu} style={styles.input} />
 
         <Text style={styles.label}>Date :</Text>
-
         <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
-          <Text style={{ color: '#000' }}>{date.toLocaleDateString()}</Text>
+          <Text style={{ color: '#000' }}>{dateTime.toLocaleDateString()}</Text>
         </TouchableOpacity>
 
         {showDatePicker && (
           <View style={styles.datePickerWrapper}>
             <DateTimePicker
-              value={date}
+              value={dateTime}
               mode="date"
               display="default"
-              onChange={onChangeDate}
-              style={{ alignSelf: 'center' }}
+              onChange={handleDateChange}
+            />
+          </View>
+        )}
+
+        <Text style={styles.label}>Heure :</Text>
+        <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.input}>
+          <Text style={{ color: '#000' }}>
+            {dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </TouchableOpacity>
+
+        {showTimePicker && (
+          <View style={styles.datePickerWrapper}>
+            <DateTimePicker
+              value={dateTime}
+              mode="time"
+              display="default"
+              onChange={handleTimeChange}
             />
           </View>
         )}
