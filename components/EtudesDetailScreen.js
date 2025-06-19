@@ -15,6 +15,7 @@ import { collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../utils/firebaseConfig';
 import { adminEmails } from '../utils/adminConfig';
 
+
 const { width, height } = Dimensions.get('window');
 
 export default function EtudesDetailScreen() {
@@ -43,6 +44,7 @@ const [confirmAcceptVisible, setConfirmAcceptVisible] = useState(false);
     });
     return unsubscribe;
   }, [study?.id]); // Relance quand study.id change
+
 
   const fetchCandidats = async () => {
     if (!study?.id) return;
