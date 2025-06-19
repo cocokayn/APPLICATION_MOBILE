@@ -229,10 +229,10 @@ export default function NewsList() {
             </TouchableOpacity>
           </View>
 
-          <TextInput placeholder="Titre" value={newTitle} onChangeText={setNewTitle} style={[styles.input, { marginBottom: 20 }]} />
-          <TextInput placeholder="Description" value={newDescription} onChangeText={setNewDescription} style={[styles.input, { marginBottom: 20 }]} />
+          <TextInput placeholder="Titre" placeholderTextColor="#999" value={newTitle} onChangeText={setNewTitle} style={[styles.input, { marginBottom: 20 }]} />
+          <TextInput placeholder="Description" placeholderTextColor="#999" value={newDescription} onChangeText={setNewDescription} style={[styles.input, { marginBottom: 20 }]} />
           {addType === 'link' && (
-            <TextInput placeholder="Lien de l'article" value={newUrl} onChangeText={setNewUrl} style={[styles.input, { marginBottom: 20 }]} />
+            <TextInput placeholder="Lien de l'article" placeholderTextColor="#999" value={newUrl} onChangeText={setNewUrl} style={[styles.input, { marginBottom: 20 }]} />
           )}
 
           <TouchableOpacity onPress={pickImage} style={[styles.imagePicker, { marginBottom: 20 }]}>
