@@ -13,9 +13,17 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { db } from '../utils/firebaseConfig';
-import { collection, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { auth } from '../utils/firebaseConfig';
+import { db, auth } from '../utils/firebaseConfig';
+import {
+  collection,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+  setDoc,
+  serverTimestamp,
+  getDoc,
+} from 'firebase/firestore';
 import { adminEmails } from '../utils/adminConfig';
 
 export default function EvenementsScreen() {
@@ -27,9 +35,6 @@ export default function EvenementsScreen() {
   const [actionType, setActionType] = useState(null);
   const [flashingId, setFlashingId] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
- 
-
-  // State local pour stocker les événements où l'utilisateur est inscrit
   const [inscribedEvents, setInscribedEvents] = useState([]);
 
   const animationRefs = useRef({});
@@ -57,6 +62,26 @@ export default function EvenementsScreen() {
     } else {
       setIsAdmin(false);
     }
+
+    // Récupérer les événements auxquels l'utilisateur est inscrit
+    if (user) {
+      const unsubscribeInscriptions = onSnapshot(collection(db, 'evenements'), (snapshot) => {
+        let userInscriptions = [];
+        snapshot.forEach(docSnap => {
+          const inscriptionsRef = collection(db, 'evenements', docSnap.id, 'inscriptions');
+          onSnapshot(inscriptionsRef, (inscriptionsSnap) => {
+            inscriptionsSnap.forEach(insc => {
+              if (insc.id === user.uid) {
+                userInscriptions.push(docSnap.id);
+                setInscribedEvents([...userInscriptions]);
+              }
+            });
+          });
+        });
+      });
+
+      return () => unsubscribeInscriptions();
+    }
   }, []);
 
   const startFlash = (eventId) => {
@@ -64,24 +89,48 @@ export default function EvenementsScreen() {
     Animated.sequence([
       Animated.timing(animationRefs.current[eventId], {
         toValue: 1,
-        duration: 200,  // Augmentation durée apparition
+        duration: 200,
         useNativeDriver: false,
       }),
       Animated.timing(animationRefs.current[eventId], {
         toValue: 0,
-        duration: 600,  // Augmentation durée disparition
+        duration: 600,
         useNativeDriver: false,
       })
     ]).start();
   };
 
-  const handleInscription = (event) => {
+  const handleInscription = async (event) => {
     if (!Number.isFinite(event.places) || event.places <= 0) {
       Alert.alert('Complet', 'Il ne reste plus de places disponibles.');
       return;
     }
-    setSelectedEvent(event);
-    setConfirmVisible(true);
+
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Erreur', 'Veuillez vous connecter pour vous inscrire.');
+      return;
+    }
+
+    try {
+      const inscriptionRef = doc(db, 'evenements', event.id, 'inscriptions', user.uid);
+      const existing = await getDoc(inscriptionRef);
+      if (existing.exists()) {
+        Alert.alert('Déjà inscrit', 'Vous êtes déjà inscrit à cet événement.');
+        return;
+      }
+
+      await setDoc(inscriptionRef, {
+        userId: user.uid,
+        evenementId: event.id,
+        dateInscription: serverTimestamp(),
+      });
+
+      setSelectedEvent(event);
+      setConfirmVisible(true);
+    } catch (error) {
+      Alert.alert('Erreur', "L'inscription a échoué.");
+    }
   };
 
   const confirmInscription = async () => {
@@ -102,7 +151,13 @@ export default function EvenementsScreen() {
   };
 
   const handleDesinscription = async (event) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
     try {
+      const inscriptionRef = doc(db, 'evenements', event.id, 'inscriptions', user.uid);
+      await deleteDoc(inscriptionRef);
+
       const eventRef = doc(db, 'evenements', event.id);
       const newPlaces = (event.places ?? 0) + 1;
       await updateDoc(eventRef, { places: newPlaces });
@@ -186,22 +241,19 @@ export default function EvenementsScreen() {
                     <Text style={styles.buttonText}>S'inscrire</Text>
                   </TouchableOpacity>
                 ) : (
-                  <>
-                    
-                    <TouchableOpacity
-                      style={styles.unregisterButton}
-                      onPress={() => handleDesinscription(event)}
-                    >
-                      <Text style={styles.unregisterButtonText}>Se désinscrire</Text>
-                    </TouchableOpacity>
-                  </>
+                  <TouchableOpacity
+                    style={styles.unregisterButton}
+                    onPress={() => handleDesinscription(event)}
+                  >
+                    <Text style={styles.unregisterButtonText}>Se désinscrire</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>
           );
         })}
 
-{isAdmin && (
+        {isAdmin && (
           <View style={styles.actionButtons}>
             <TouchableOpacity style={styles.greenButton} onPress={handleAdd}>
               <Text style={styles.buttonLabel}>Ajouter un événement</Text>
@@ -216,7 +268,6 @@ export default function EvenementsScreen() {
         )}
       </ScrollView>
 
-      {/* Confirm Modal */}
       <Modal visible={confirmVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -235,7 +286,6 @@ export default function EvenementsScreen() {
         </View>
       </Modal>
 
-      {/* Success Modal */}
       <Modal visible={successVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -247,7 +297,6 @@ export default function EvenementsScreen() {
         </View>
       </Modal>
 
-      {/* Picker Modal */}
       <Modal visible={pickerModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { maxHeight: '60%' }]}>
