@@ -2,8 +2,11 @@
 
 export const adminEmails = [
   'coco@epf.fr',
-  'admin2@example.com',
-  'admin3@example.com',
-  'admin4@example.com',
-  'admin5@example.com',
+  'iris.berthelot@epfprojets.com',
+  'manon.fouchard@epfprojets.com',
+  'jean-baptiste.garret@epfprojets.com', 
+  'lou-anne.segouin@epfprojets.com',
+  'quentin.dufour@epfprojets.com',
+  'samy.benarbia@epfprojets.com',
+  'valentin.gavetti@epfprojets.com'
 ];
