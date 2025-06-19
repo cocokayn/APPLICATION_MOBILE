@@ -27,6 +27,9 @@ export default function EtudesDetailScreen() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [candidats, setCandidats] = useState([]);
+  const [selectModalVisible, setSelectModalVisible] = useState(false);
+const [selectedCandidat, setSelectedCandidat] = useState(null);
+const [confirmAcceptVisible, setConfirmAcceptVisible] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -163,6 +166,77 @@ export default function EtudesDetailScreen() {
             <Text style={styles.buttonText}>Modifier cette étude</Text>
           </TouchableOpacity>
         )}
+
+{isAdmin && (
+  <TouchableOpacity
+    style={[styles.button, { backgroundColor: '#e67e22' }]}
+    onPress={() => setSelectModalVisible(true)}
+  >
+    <Text style={styles.buttonText}>Accepter un candidat</Text>
+  </TouchableOpacity>
+)}
+
+<Modal transparent visible={selectModalVisible} animationType="fade">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalBox}>
+      <Text style={styles.modalText}>Sélectionne un candidat :</Text>
+      <FlatList
+        data={candidats}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.candidatItem}
+            onPress={() => {
+              setSelectedCandidat(item);
+              setSelectModalVisible(false);
+              setConfirmAcceptVisible(true);
+            }}
+          >
+            <Text style={styles.candidatName}>{item.prenom} {item.nom}</Text>
+          </TouchableOpacity>
+        )}
+      />
+      <TouchableOpacity
+        style={styles.modalButton}
+        onPress={() => setSelectModalVisible(false)}
+      >
+        <Text style={styles.modalButtonText}>Fermer</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
+<Modal transparent visible={confirmAcceptVisible} animationType="fade">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalBox}>
+      <Text style={styles.modalText}>
+        Confirmer l'acceptation de {selectedCandidat?.prenom} {selectedCandidat?.nom} ?
+      </Text>
+      <View style={styles.modalButtons}>
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={() => {
+            // 👉 ici tu peux ajouter la logique pour enregistrer dans Firebase si tu veux
+            console.log('Candidat accepté :', selectedCandidat);
+            setConfirmAcceptVisible(false);
+            setSelectedCandidat(null);
+          }}
+        >
+          <Text style={styles.modalButtonText}>Oui</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={() => {
+            setConfirmAcceptVisible(false);
+            setSelectedCandidat(null);
+          }}
+        >
+          <Text style={styles.modalButtonText}>Annuler</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
 
         <TouchableOpacity style={styles.button} onPress={handlePostuler}>
           <Text style={styles.buttonText}>Postuler à cette étude</Text>

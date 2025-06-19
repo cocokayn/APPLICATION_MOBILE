@@ -11,36 +11,88 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../utils/firebaseConfig';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, collectionGroup, getDocs } from 'firebase/firestore';
 
 export default function ProfileScreen() {
   const [avatar] = useState(require('../assets/avatar.png'));
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
+  const [nbEtudes, setNbEtudes] = useState(0);
+  const [totalJeh, setTotalJeh] = useState(0);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
+useEffect(() => {
+  const user = auth.currentUser;
+  if (!user) return;
 
-    const docRef = doc(db, 'users', user.uid);
-    const unsubscribe = onSnapshot(
-      docRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setNom(data.nom || '');
-          setPrenom(data.prenom || '');
-        }
-      },
-      (error) => {
-        console.error('Erreur écoute temps réel profil :', error);
+  const docRef = doc(db, 'users', user.uid);
+  const unsubscribeUser = onSnapshot(
+    docRef,
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setNom(data.nom || '');
+        setPrenom(data.prenom || '');
       }
-    );
+    },
+    (error) => {
+      console.error('Erreur écoute temps réel profil :', error);
+    }
+  );
 
-    return () => unsubscribe();
-  }, []);
+  const candidatsRef = collectionGroup(db, 'candidats');
+  const unsubscribeCandidats = onSnapshot(candidatsRef, async (snapshot) => {
+    const etudes = [];
+
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      if (data.id === user.uid && docSnap.ref.path.includes('etudes')) {
+        const etudeId = docSnap.ref.parent.parent.id;
+        const etudeDoc = await getDoc(doc(db, 'etudes', etudeId));
+        if (etudeDoc.exists()) {
+          etudes.push(etudeDoc.data());
+        }
+      }
+    }
+
+    setNbEtudes(etudes.length);
+    const totalJehValue = etudes.reduce((sum, etude) => sum + (parseFloat(etude.jeh) || 0), 0);
+    setTotalJeh(totalJehValue);
+  }, (error) => {
+    console.error('Erreur écoute temps réel candidatures :', error);
+  });
+
+  return () => {
+    unsubscribeUser();
+    unsubscribeCandidats();
+  };
+}, []);
+
+
+  const fetchEtudesData = async (userId) => {
+    try {
+      const snapshot = await getDocs(collectionGroup(db, 'candidats'));
+      const etudes = [];
+
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        if (data.id === userId && docSnap.ref.path.includes('etudes')) {
+          const etudeId = docSnap.ref.parent.parent.id;
+          const etudeDoc = await getDoc(doc(db, 'etudes', etudeId));
+          if (etudeDoc.exists()) {
+            etudes.push(etudeDoc.data());
+          }
+        }
+      }
+
+      setNbEtudes(etudes.length);
+      const totalJehValue = etudes.reduce((sum, etude) => sum + (parseFloat(etude.jeh) || 0), 0);
+      setTotalJeh(totalJehValue);
+    } catch (error) {
+      console.error('Erreur récupération études :', error);
+    }
+  };
 
   const handleLogout = () => setLogoutModalVisible(true);
   const confirmLogout = () => {
@@ -68,12 +120,12 @@ export default function ProfileScreen() {
         <View style={styles.cardContainer}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Études réalisées</Text>
-            <Text style={styles.cardValue}>12</Text>
+            <Text style={styles.cardValue}>{nbEtudes}</Text>
           </View>
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Nombre de JEH</Text>
-            <Text style={styles.cardValue}>8</Text>
+            <Text style={styles.cardValue}>{totalJeh}</Text>
           </View>
         </View>
 
@@ -91,7 +143,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Modal déconnexion */}
+      {/* Modal de déconnexion */}
       <Modal
         animationType="slide"
         transparent={true}
