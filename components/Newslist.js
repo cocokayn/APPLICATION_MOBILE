@@ -155,7 +155,7 @@ export default function NewsList() {
                 {item.urlToImage && <Image source={{ uri: item.urlToImage }} style={styles.image} />}
                 <Text style={styles.titre}>{item.title}</Text>
                 <Text>{truncateText(item.description)}</Text>
-                {catLabel === 'JE' && (
+                {catLabel === 'JE' && isAdmin && (
                   <TouchableOpacity onPress={() => deleteArticle(index)} style={styles.deleteButton}>
                     <Text style={styles.deleteText}>Supprimer</Text>
                   </TouchableOpacity>
