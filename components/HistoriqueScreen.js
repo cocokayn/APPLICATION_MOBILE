@@ -1,16 +1,75 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { auth, db } from '../utils/firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collectionGroup, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const { width, height } = Dimensions.get('window');
 
 export default function HistoriqueScreen() {
   const navigation = useNavigation();
 
-  const stats = {
-    etudes: 5,
-    jeh: 8,
-    badges: ['UX', 'Firebase', 'React'],
+  const [userId, setUserId] = useState(null);
+  const [etudes, setEtudes] = useState([]);
+  const [evenements, setEvenements] = useState([]);
+  const [totalJeh, setTotalJeh] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchHistorique();
+    }
+  }, [userId]);
+
+  const fetchHistorique = async () => {
+    try {
+      // Chercher les études auxquelles l'utilisateur a postulé
+      const etudesSnapshot = await getDocs(collectionGroup(db, 'candidats'));
+      const etudesResult = [];
+
+      for (const docSnap of etudesSnapshot.docs) {
+        const data = docSnap.data();
+        if (data.id === userId && docSnap.ref.path.includes('etudes')) {
+          const etudeId = docSnap.ref.parent.parent.id;
+          const etudeDoc = await getDoc(doc(db, 'etudes', etudeId));
+          if (etudeDoc.exists()) {
+            etudesResult.push({ id: etudeId, ...etudeDoc.data() });
+          }
+        }
+      }
+
+      const totalJehValue = etudesResult.reduce((sum, etude) => sum + (parseFloat(etude.jeh) || 0), 0);
+
+      // Chercher les événements
+      const eventsSnapshot = await getDocs(collectionGroup(db, 'candidats'));
+      const evenementsResult = [];
+
+      for (const docSnap of eventsSnapshot.docs) {
+        const data = docSnap.data();
+        if (data.id === userId && docSnap.ref.path.includes('evenements')) {
+          const eventId = docSnap.ref.parent.parent.id;
+          const eventDoc = await getDoc(doc(db, 'evenements', eventId));
+          if (eventDoc.exists()) {
+            evenementsResult.push({ id: eventId, ...eventDoc.data() });
+          }
+        }
+      }
+
+      setEtudes(etudesResult);
+      setEvenements(evenementsResult);
+      setTotalJeh(totalJehValue);
+    } catch (error) {
+      console.error('Erreur de chargement de l’historique :', error);
+    }
   };
 
   return (
@@ -23,18 +82,30 @@ export default function HistoriqueScreen() {
         <Text style={styles.title}>Historique</Text>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Études réalisées :</Text>
-        <Text style={styles.value}>{stats.etudes}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.card}>
+          <Text style={styles.label}>Nombre d'études réalisées :</Text>
+          <Text style={styles.value}>{etudes.length}</Text>
 
-        <Text style={styles.label}>Nombre total de JEH :</Text>
-        <Text style={styles.value}>{stats.jeh}</Text>
+          <Text style={styles.label}>Total de JEH :</Text>
+          <Text style={styles.value}>{totalJeh}</Text>
 
-        <Text style={styles.label}>Badges obtenus :</Text>
-        {stats.badges.map((badge, i) => (
-          <Text key={i} style={styles.value}>🏅 {badge}</Text>
-        ))}
-      </View>
+          <Text style={styles.label}>Nombre d'événements :</Text>
+          <Text style={styles.value}>{evenements.length}</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>📘 Études :</Text>
+          {etudes.map((etude) => (
+            <View key={etude.id} style={styles.item}>
+              <Text style={styles.itemTitle}>{etude.titre}</Text>
+              <Text style={styles.itemDetail}>Domaine : {etude.domaine}</Text>
+              <Text style={styles.itemDetail}>Durée : {etude.duree}</Text>
+              <Text style={styles.itemDetail}>JEH : {etude.jeh}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -68,11 +139,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: height * 0.03,
   },
+  scrollContent: {
+    paddingHorizontal: '5%',
+    paddingBottom: 30,
+  },
   card: {
     backgroundColor: '#f0f0f0',
-    marginHorizontal: '5%',
     borderRadius: 12,
     padding: 20,
+    marginBottom: 20,
   },
   label: {
     fontWeight: 'bold',
@@ -82,5 +157,25 @@ const styles = StyleSheet.create({
   value: {
     fontSize: width * 0.042,
     marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: width * 0.05,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  item: {
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  itemTitle: {
+    fontSize: width * 0.045,
+    fontWeight: 'bold',
+  },
+  itemDetail: {
+    fontSize: width * 0.04,
+    color: '#555',
   },
 });
